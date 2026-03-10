@@ -1,4 +1,4 @@
-# Out of Orbit: Neon Miko
+# Out of Orbit
 
 A C++ arcade shoot-em-up built with Raylib. Features a vaporwave aesthetic, multiple ship types, and a wave-based enemy system.
 
