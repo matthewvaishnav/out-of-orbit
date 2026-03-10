@@ -1,0 +1,21 @@
+# Binaries
+void_blaster
+
+# Build Artifacts
+*.o
+*.obj
+*.exe
+*.out
+build/
+
+# IDE & Editor files
+.vscode/
+.idea/
+.claude/
+.aider/
+*.swp
+*.swo
+
+# System files
+.DS_Store
+Thumbs.db
