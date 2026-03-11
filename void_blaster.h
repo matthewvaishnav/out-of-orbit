@@ -83,21 +83,13 @@ constexpr int   SCALE         = 2;
 constexpr int   WORLD_W       = 10000000;
 constexpr int   WORLD_H       = 10000000;
 constexpr int   NEBULA_COUNT  = 22;
-constexpr float PLAYER_SPEED  = 118.f;
+constexpr float PLAYER_SPEED  = 236.f;
 constexpr float PLAYER_RADIUS = 13.f;
 constexpr float PLAYER_RADIUS_L2 = 18.f;
 
 // Bullet pool sizes — pre-allocated, no heap fragmentation mid-frame
 constexpr int BULLET_POOL_SIZE      = 1024;
 constexpr int BOSS_BULLET_POOL_SIZE = 512;
-constexpr int PARTICLE_POOL_SIZE    = 1024;
-constexpr int PICKUP_POOL_SIZE      = 256;
-constexpr int POPUP_POOL_SIZE       = 128;
-
-// Spatial grid for collision optimization
-constexpr int GRID_CELL_SIZE        = 128;
-constexpr int GRID_COLS             = (SCREEN_W / GRID_CELL_SIZE) + 2;
-constexpr int GRID_ROWS             = (SCREEN_H / GRID_CELL_SIZE) + 2;
 
 // ══════════════════════════════════════════════════════════════
 //  ENUMS
@@ -111,7 +103,7 @@ enum ShipType   { SHIP_INTERCEPTOR=0, SHIP_BRAWLER=1, SHIP_PHANTOM=2, SHIP_TITAN
 //  ENTITY STRUCTS
 // ══════════════════════════════════════════════════════════════
 struct Bullet {
-    Vector2 pos, vel, renderPos;
+    Vector2 pos, vel;
     int     life        = 0;
     bool    bounced     = false;
     bool    active      = false;
@@ -132,10 +124,10 @@ struct Bullet {
 };
 
 struct Particle {
-    Vector2 pos, vel, prevPos, renderPos;
+    Vector2 pos, vel, prevPos;
     float   life, maxLife, radius;
     Color   color;
-    bool    active, isRing, isSpark;
+    bool    isRing, isSpark;
     float   ringMaxR;
     float   stretch = 1.f;
     float   angle   = 0.f;
@@ -143,11 +135,11 @@ struct Particle {
     bool    isShard = false;
 };
 
-struct Pickup   { Vector2 pos, renderPos; float vy,spin; int value,life; bool active; };
-struct PopupText{ Vector2 pos, renderPos; std::string text; Color color; float life,maxLife; int fontSize; bool active; };
+struct Pickup   { Vector2 pos; float vy,spin; int value,life; bool active; };
+struct PopupText{ Vector2 pos; std::string text; Color color; float life,maxLife; int fontSize; };
 
 struct Enemy {
-    Vector2  pos, vel, renderPos;
+    Vector2  pos, vel;
     EnemyType type;
     int      hp, maxHp, scoreVal, flashTimer;
     float    radius, angle, spinSpeed, glowPulse;
@@ -155,15 +147,6 @@ struct Enemy {
     Color    col;
     float    shootTimer = 0.f;
     int      variant    = 0;
-};
-
-struct SpatialGrid {
-    std::vector<int> cells[GRID_COLS][GRID_ROWS];
-    void Clear() {
-        for(int x=0; x<GRID_COLS; x++)
-            for(int y=0; y<GRID_ROWS; y++)
-                cells[x][y].clear();
-    }
 };
 
 struct Boss {
@@ -274,23 +257,14 @@ struct Game {
     float resonanceTimer=0;
     float chiGauge=0,chiRingTimer=0,heatVentTimer=0;
 
-    // ── Upgrade cache — precomputed booleans, refreshed on purchase ──
-    struct UpgradeCache {
-        bool rapid=false,afterburn=false,warpcore=false,explosive=false,piercing=false;
-        bool trishot=false,scatter=false,ricochet=false,chiflow=false,chiburst=false;
-        bool cooldown=false,crit=false,magnet=false,vampire=false,bigbang=false;
-        bool goldmag=false,shield=false,overclock=false;
-        int  cooldownLv=0, overclockLv=0;
-    } ucache;
-
     // ── Bullet pools — fixed-size, active-flag, no mid-frame allocation ──
     std::array<Bullet, BULLET_POOL_SIZE>      bullets;
     std::array<Bullet, BOSS_BULLET_POOL_SIZE> bossBullets;
-    std::array<Particle, PARTICLE_POOL_SIZE>  particles;
-    std::array<Pickup, PICKUP_POOL_SIZE>      pickups;
-    std::array<PopupText, POPUP_POOL_SIZE>    popups;
 
     std::vector<Enemy>     enemies;
+    std::vector<Particle>  particles;
+    std::vector<Pickup>    pickups;
+    std::vector<PopupText> popups;
     std::vector<Star>      stars;
     std::vector<Nebula>    nebulas;
     std::vector<Hazard>    hazards;
@@ -301,41 +275,32 @@ struct Game {
     Boss boss={};
     std::vector<Upgrade> shopItems;
 
-    SpatialGrid grid;
+    // ── Upgrade cache — precomputed booleans, refreshed on purchase ──
+    struct UpgradeCache {
+        bool rapid=false,afterburn=false,warpcore=false,explosive=false,piercing=false;
+        bool trishot=false,scatter=false,ricochet=false,chiflow=false,chiburst=false;
+        bool cooldown=false,crit=false,magnet=false,vampire=false,bigbang=false;
+        bool goldmag=false,shield=false,overclock=false;
+        int  cooldownLv=0, overclockLv=0;
+    } ucache;
 
-    // Rover indices for O(1) amortised pool insertion
+    // Rover indices for O(1) amortised bullet pool insertion
     int bulletRover     = 0;
     int bossBulletRover = 0;
-    int particleRover   = 0;
-    int pickupRover     = 0;
-    int popupRover      = 0;
 };
 
 // Pool helpers — circular rover, O(1) amortised
 inline void BulletPoolPush(std::array<Bullet,BULLET_POOL_SIZE>& pool, int& rover, const Bullet& b){
-    pool[rover] = b;
-    pool[rover].active = true;
-    rover = (rover + 1) % BULLET_POOL_SIZE;
+    for(int i=0;i<BULLET_POOL_SIZE;i++){
+        int idx=(rover+i)%BULLET_POOL_SIZE;
+        if(!pool[idx].active){ pool[idx]=b; rover=(idx+1)%BULLET_POOL_SIZE; return; }
+    }
 }
 inline void BossBulletPoolPush(std::array<Bullet,BOSS_BULLET_POOL_SIZE>& pool, int& rover, const Bullet& b){
-    pool[rover] = b;
-    pool[rover].active = true;
-    rover = (rover + 1) % BOSS_BULLET_POOL_SIZE;
-}
-inline void ParticlePoolPush(std::array<Particle,PARTICLE_POOL_SIZE>& pool, int& rover, const Particle& p){
-    pool[rover] = p;
-    pool[rover].active = true;
-    rover = (rover + 1) % PARTICLE_POOL_SIZE;
-}
-inline void PickupPoolPush(std::array<Pickup,PICKUP_POOL_SIZE>& pool, int& rover, const Pickup& p){
-    pool[rover] = p;
-    pool[rover].active = true;
-    rover = (rover + 1) % PICKUP_POOL_SIZE;
-}
-inline void PopupPoolPush(std::array<PopupText,POPUP_POOL_SIZE>& pool, int& rover, const PopupText& p){
-    pool[rover] = p;
-    pool[rover].active = true;
-    rover = (rover + 1) % POPUP_POOL_SIZE;
+    for(int i=0;i<BOSS_BULLET_POOL_SIZE;i++){
+        int idx=(rover+i)%BOSS_BULLET_POOL_SIZE;
+        if(!pool[idx].active){ pool[idx]=b; rover=(idx+1)%BOSS_BULLET_POOL_SIZE; return; }
+    }
 }
 
 // ══════════════════════════════════════════════════════════════

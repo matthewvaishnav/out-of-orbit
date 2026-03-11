@@ -122,8 +122,8 @@ void SpawnEasterEggs(int wave, Vector2 playerPos){
         {{0, 1},{1, 5},{2, 8},{3,11},{5,14},{6, 4}},
         // Wave 2: EMBER FIELDS — golem+geyser+pool+sprites+salamander+manta
         {{0, 2},{1, 6},{2, 9},{3, 4},{5,12},{6, 7}},
-        // Wave 3: CRYSTAL CAVERNS — stalactites+sprites+yeti+ice sprite
-        {{0, 7},{0,15},{1, 0},{2, 3},{5, 8},{6,11}},
+        // Wave 3: CRYSTAL CAVERNS — stalactites+sprites+ice sprite+ice sprite
+        {{0, 7},{0,15},{1, 0},{2, 3},{6, 8},{6,11}},
         // Wave 4: RESONANCE CORE — tuning forks+scarab+djinn
         {{0, 4},{0,11},{1, 2},{2, 5},{5, 9},{6,14}},
         // Wave 5: SPORE WASTES — mycelium brains+bloom pod+spore sprite

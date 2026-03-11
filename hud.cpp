@@ -877,11 +877,11 @@ void DrawBorderPanels(Game& g, UIState& ui, float t, float dt){
         float scanX = fmodf(t * 80.f, ww * 2.f);
         if(scanX < ww) DrawLineEx({scanX, 0}, {scanX, th}, 1.5f, ColorAlpha(waveCol, 0.25f));
 
-        // OUT OF ORBIT title
+        // VOID BLASTER title
         float hcyc = fmodf(t*.4f,3.f);
         Color hc2 = hcyc<1?LerpC(VP_CYAN,VP_PURPLE,hcyc):hcyc<2?LerpC(VP_PURPLE,VP_HOTPINK,hcyc-1):LerpC(VP_HOTPINK,VP_CYAN,hcyc-2);
         int tsz=(int)(th*.62f); if(tsz<8)tsz=8;
-        const char* ttl="OUT  OF  ORBIT";
+        const char* ttl="VOID  BLASTER";
         if(false){
             Vector2 m = MeasureTextEx(ui.fontBig, ttl, (float)tsz, tsz*0.04f);
             TF(ttl, midx, midy - m.y*.5f, tsz, ColorAlpha(hc2,.12f), ui.fontBig);

@@ -25,7 +25,7 @@ void DrawEasterEggs(Game& g, float t, float revealAlpha){
         switch(w){
         case 0:{ // OCEAN WORLD — 4 aquatic variations
             float wBob = sinf(t*0.35f+ph)*S(2.f);
-            ra *= 0.68f; // ocean creatures are subtle background presences
+            ra *= 0.82f; // ocean creatures are subtle background presences
             
             if(e.subType == 0){ // space whale — original majestic design, scaled up
                 float wsc = sc * 1.25f; // whales are big but not overwhelming
@@ -134,112 +134,61 @@ void DrawEasterEggs(Game& g, float t, float revealAlpha){
                         W(3.f-ba*0.7f),VP_CYAN,ra*bAlpha*0.6f);
                 }
             }
-            else if(e.subType == 1){ // sea turtle — ancient guardian with glowing shell
+            else if(e.subType == 1){ // sea turtle — ancient guardian drifting on a slow arc
                 float tsc = sc * 0.52f; auto T = [&](float v){ return v * tsc; };
-                // Turtle glides on a slow, broad arc — flippers drive it, body is stable
                 float glideX = sinf(t*0.14f+ph)*T(6.f) + sinf(t*0.09f+ph*1.7f)*T(3.f);
                 float glideY = cosf(t*0.18f+ph)*T(4.f);
                 float tX = sp.x + glideX;
                 float tY = spY + glideY;
-                float fSwim = sinf(t*0.9f+ph);
-                // shadow/depth layer
-                DrawEllipse((int)(tX+T(2.f)),(int)(tY+T(2.f)),(int)T(21.f),(int)T(8.f),
-                    ColorAlpha({0,0,0,255},ra*0.18f));
-                // carapace base
-                DrawEllipse((int)tX,(int)tY,(int)T(21.f),(int)T(17.f),
-                    ColorAlpha({8,52,42,255},ra*0.92f));
-                DrawEllipseLines((int)tX,(int)tY,(int)T(21.f),(int)T(17.f),
-                    ColorAlpha({4,32,24,255},ra*0.78f));
-                // shell dome highlight — raised center
-                DrawEllipse((int)(tX-T(3.f)),(int)(tY-T(3.f)),(int)T(17.f),(int)T(12.f),
-                    ColorAlpha({12,78,62,255},ra*0.62f));
-                // central scute plate
-                DrawEllipse((int)tX,(int)tY,(int)T(9.f),(int)T(7.f),
-                    ColorAlpha({16,95,75,255},ra*0.58f));
-                DrawEllipseLines((int)tX,(int)tY,(int)T(9.f),(int)T(7.f),
-                    ColorAlpha({5,38,30,255},ra*0.50f));
-                // hexagonal shell scute lines radiating from center
-                for(int i = 0; i < 6; i++){
-                    float ha = i*(2.f*PI/6.f);
-                    float hx = tX + cosf(ha)*T(9.5f);
-                    float hy = tY + sinf(ha)*T(7.5f);
-                    DrawLineEx({tX,tY},{hx,hy},T(0.65f),ColorAlpha({4,32,24,255},ra*0.48f));
-                    DrawCircleV({hx,hy},T(3.2f),ColorAlpha({10,68,54,255},ra*0.58f));
-                    DrawCircleV({hx,hy},T(2.0f),ColorAlpha({14,84,66,255},ra*0.52f));
-                }
-                // outer marginal scutes ring
-                for(int i = 0; i < 12; i++){
-                    float ha = i*(2.f*PI/12.f);
-                    float hx1 = tX + cosf(ha)*T(11.f);
-                    float hy1 = tY + sinf(ha)*T(9.f);
-                    float hx2 = tX + cosf(ha)*T(16.f);
-                    float hy2 = tY + sinf(ha)*T(13.f);
-                    DrawLineEx({hx1,hy1},{hx2,hy2},T(0.55f),ColorAlpha({4,32,24,255},ra*0.42f));
-                }
-                // bioluminescent shell glow — pulses along scute edges
-                float glowPulse = 0.4f+0.6f*sinf(t*1.4f+ph);
-                DrawNeonCircle({tX,tY},T(22.f),VP_DEEPCYAN,ra*0.10f);
-                for(int i = 0; i < 6; i++){
-                    float ha = i*(2.f*PI/6.f) + t*0.06f;
-                    DrawCircleV({tX+cosf(ha)*T(15.f),tY+sinf(ha)*T(12.f)},T(1.4f),
-                        ColorAlpha(VP_TEAL,ra*glowPulse*0.65f));
-                    DrawNeonCircle({tX+cosf(ha)*T(15.f),tY+sinf(ha)*T(12.f)},T(2.2f),
-                        VP_CYAN,ra*glowPulse*0.28f);
-                }
-                // plastron — lighter underbelly stripe
-                DrawEllipse((int)tX,(int)(tY+T(3.f)),(int)T(16.f),(int)T(5.f),
-                    ColorAlpha({22,112,88,255},ra*0.28f));
-                // neck
-                DrawEllipse((int)(tX-T(16.f)),(int)(tY-T(1.f)),(int)T(6.f),(int)T(4.f),
-                    ColorAlpha({10,62,50,255},ra*0.85f));
-                // head with outline
-                float headBob = sinf(t*0.5f+ph)*T(1.5f);
-                DrawEllipse((int)(tX-T(22.f)),(int)(tY-T(3.f)+headBob),(int)T(10.f),(int)T(8.f),
-                    ColorAlpha({10,62,50,255},ra*0.90f));
-                DrawEllipseLines((int)(tX-T(22.f)),(int)(tY-T(3.f)+headBob),(int)T(10.f),(int)T(8.f),
-                    ColorAlpha({4,36,28,255},ra*0.72f));
-                // head scale stripe patterns
-                DrawLineEx({tX-T(14.f),tY+headBob},{tX-T(19.f),tY+T(1.f)+headBob},T(0.7f),
-                    ColorAlpha({28,148,118,255},ra*0.42f));
-                DrawLineEx({tX-T(14.f),tY-T(2.f)+headBob},{tX-T(19.f),tY-T(1.f)+headBob},T(0.6f),
-                    ColorAlpha({28,148,118,255},ra*0.38f));
-                // eye with iris, pupil, and highlight
-                DrawCircleV({tX-T(18.f),tY-T(5.f)+headBob},T(3.5f),ColorAlpha({3,20,16,255},ra*0.98f)); // socket
-                DrawCircleV({tX-T(18.f),tY-T(5.f)+headBob},T(2.8f),ColorAlpha({4,32,26,255},ra*0.96f));
-                DrawCircleV({tX-T(18.f),tY-T(5.f)+headBob},T(2.0f),ColorAlpha({30,152,112,255},ra*0.72f)); // iris
-                DrawCircleV({tX-T(18.f),tY-T(5.f)+headBob},T(1.1f),ColorAlpha(VP_BLACK,ra)); // pupil
-                DrawCircleV({tX-T(17.4f),tY-T(5.8f)+headBob},T(0.65f),ColorAlpha(VP_WHITE,ra*0.88f)); // highlight
-                DrawNeonCircle({tX-T(18.f),tY-T(5.f)+headBob},T(2.8f),VP_TEAL,ra*0.28f);
-                // mouth line
-                DrawLineEx({tX-T(25.f),tY+T(1.5f)+headBob},{tX-T(15.f),tY+T(2.5f)+headBob},
-                    T(0.75f),ColorAlpha({4,28,20,255},ra*0.65f));
-                // front flippers with edge outlines and highlight
-                float fFront = fSwim*T(4.5f);
-                for(int s = -1; s <= 1; s += 2){
-                    float fy = tY - T(13.f) + fFront*(float)s;
-                    DrawEllipse((int)(tX-T(5.f)),(int)fy,(int)T(7.f),(int)T(13.f),
-                        ColorAlpha({8,56,44,255},ra*0.80f));
-                    DrawEllipseLines((int)(tX-T(5.f)),(int)fy,(int)T(7.f),(int)T(13.f),
-                        ColorAlpha({4,30,22,255},ra*0.68f));
-                    DrawEllipse((int)(tX-T(6.f)),(int)(fy-T(2.f)),(int)T(5.f),(int)T(9.f),
-                        ColorAlpha({14,78,60,255},ra*0.38f));
-                    // flipper vein lines
-                    DrawLineEx({tX-T(8.f),fy-T(4.f)},{tX+T(0.f),fy+T(5.f)},T(0.5f),
-                        ColorAlpha({5,35,26,255},ra*0.35f));
-                    DrawLineEx({tX-T(5.f),fy-T(5.f)},{tX+T(1.f),fy+T(4.f)},T(0.4f),
-                        ColorAlpha({5,35,26,255},ra*0.28f));
-                }
-                // rear flippers
-                float fRear = sinf(t*0.9f+ph+1.2f)*T(3.f);
-                for(int s = -1; s <= 1; s += 2){
-                    float ry = tY + T(13.f) + fRear*(float)s;
-                    DrawEllipse((int)(tX+T(5.f)),(int)ry,(int)T(5.f),(int)T(10.f),
-                        ColorAlpha({7,50,38,255},ra*0.72f));
-                    DrawEllipseLines((int)(tX+T(5.f)),(int)ry,(int)T(5.f),(int)T(10.f),
-                        ColorAlpha({4,26,18,255},ra*0.62f));
-                    DrawEllipse((int)(tX+T(4.f)),(int)(ry-T(1.5f)),(int)T(3.5f),(int)T(7.f),
-                        ColorAlpha({12,70,54,255},ra*0.32f));
-                }
+                float fSwim = sinf(t*0.85f+ph); // flipper stroke
+                float headNod = sinf(t*0.45f+ph)*T(1.2f);
+                // ── front flippers (behind shell in draw order) ──
+                float fFront = fSwim * T(5.f);
+                DrawTriangle({tX-T(4.f), tY},
+                             {tX-T(4.f), tY - T(16.f) + fFront},
+                             {tX+T(8.f), tY - T(10.f)},
+                             ColorAlpha({8,55,44,255}, ra*0.72f));
+                DrawTriangle({tX-T(4.f), tY},
+                             {tX-T(4.f), tY + T(16.f) - fFront},
+                             {tX+T(8.f), tY + T(10.f)},
+                             ColorAlpha({8,55,44,255}, ra*0.72f));
+                // ── rear flippers ──
+                float fRear = sinf(t*0.85f+ph+1.1f) * T(3.5f);
+                DrawTriangle({tX+T(8.f), tY},
+                             {tX+T(14.f), tY - T(12.f) + fRear},
+                             {tX+T(18.f), tY - T(4.f)},
+                             ColorAlpha({7,48,38,255}, ra*0.65f));
+                DrawTriangle({tX+T(8.f), tY},
+                             {tX+T(14.f), tY + T(12.f) - fRear},
+                             {tX+T(18.f), tY + T(4.f)},
+                             ColorAlpha({7,48,38,255}, ra*0.65f));
+                // ── shell ──
+                DrawEllipse((int)tX,(int)tY,(int)T(20.f),(int)T(15.f),
+                    ColorAlpha({8,54,42,255},ra*0.92f));
+                // dome highlight
+                DrawEllipse((int)(tX-T(4.f)),(int)(tY-T(3.f)),(int)T(14.f),(int)T(9.f),
+                    ColorAlpha({14,82,64,255},ra*0.52f));
+                // scute pattern — 3 lines: one spine, two diagonals
+                DrawLineEx({tX-T(10.f),tY},{tX+T(10.f),tY}, T(0.7f),ColorAlpha({4,28,20,255},ra*0.45f));
+                DrawLineEx({tX,tY-T(10.f)},{tX+T(8.f),tY+T(8.f)}, T(0.6f),ColorAlpha({4,28,20,255},ra*0.38f));
+                DrawLineEx({tX,tY-T(10.f)},{tX-T(8.f),tY+T(8.f)}, T(0.6f),ColorAlpha({4,28,20,255},ra*0.38f));
+                // shell outline
+                DrawEllipseLines((int)tX,(int)tY,(int)T(20.f),(int)T(15.f),
+                    ColorAlpha({5,35,26,255},ra*0.70f));
+                // bioluminescent glow edge — slow pulse
+                float glowPulse = 0.4f+0.6f*sinf(t*1.3f+ph);
+                DrawNeonCircle({tX,tY},T(21.f),VP_TEAL,ra*glowPulse*0.18f);
+                // ── neck ──
+                DrawEllipse((int)(tX-T(18.f)),(int)tY,(int)T(5.f),(int)T(3.5f),
+                    ColorAlpha({10,62,48,255},ra*0.82f));
+                // ── head ──
+                DrawCircleV({tX-T(24.f),tY+headNod},T(7.f),ColorAlpha({10,62,48,255},ra*0.88f));
+                DrawCircleV({tX-T(24.f),tY+headNod},T(5.5f),ColorAlpha({14,80,60,255},ra*0.72f));
+                // eye
+                DrawCircleV({tX-T(21.f),tY-T(3.f)+headNod},T(2.2f),ColorAlpha({2,12,10,255},ra*0.98f));
+                DrawCircleV({tX-T(21.f),tY-T(3.f)+headNod},T(1.3f),ColorAlpha({28,145,105,255},ra*0.85f));
+                DrawCircleV({tX-T(21.f),tY-T(3.f)+headNod},T(0.6f),ColorAlpha(VP_BLACK,ra));
+                DrawCircleV({tX-T(20.5f),tY-T(3.6f)+headNod},T(0.45f),ColorAlpha(VP_WHITE,ra*0.85f));
             }
             else if(e.subType == 2){ // jellyfish — translucent bell with flowing tentacles
                 float jsc = sc * 0.52f; auto J = [&](float v){ return v * jsc; };
@@ -327,106 +276,70 @@ void DrawEasterEggs(Game& g, float t, float revealAlpha){
                     DrawCircleV(prev,J(0.7f),ColorAlpha(VP_CYAN,ra*jPulse*0.38f));
                 }
             }
-            else if(e.subType == 5){ // SEAHORSE — majestic bony drift creature
+            else if(e.subType == 5){ // SEAHORSE — upright drifter with iconic S-curve
                 float hsc = sc * 0.52f; auto H = [&](float v){ return v * hsc; };
                 float driftX = cosf(t*0.17f+ph)*H(3.f) + cosf(t*0.11f+ph*1.4f)*H(1.5f);
                 float driftY = sinf(t*0.14f+ph)*H(4.f) + sinf(t*0.20f+ph*0.8f)*H(2.f);
                 float sX = sp.x + driftX;
                 float sY = spY + driftY;
-                float pulse  = 0.5f+0.5f*sinf(t*2.8f+ph);
-                float sway   = sinf(t*0.9f+ph)*H(1.5f);
-                // shadow
-                DrawEllipse((int)(sX+H(2.f)),(int)(sY+H(2.f)),(int)H(8.f),(int)H(4.f),
-                    ColorAlpha({0,0,0,255},ra*0.14f));
-                // coronet crown — elaborate branching spines atop the head
+                float sway = sinf(t*0.9f+ph)*H(1.2f);
+                // ── body — tapered tube drawn as overlapping circles ──
+                // Trunk: wide at top, narrows toward tail
+                static const float bW[] = {5.5f,5.8f,5.6f,5.2f,4.6f,3.9f,3.1f,2.3f};
+                static const float bY[] = { 0.f, 3.5f, 7.f,10.5f,14.f,17.5f,20.5f,23.f};
+                for(int i = 0; i < 8; i++){
+                    DrawCircleV({sX+sway, sY+H(bY[i])}, H(bW[i]),
+                        ColorAlpha({10,75,108,255}, ra*0.85f));
+                }
+                // lighter belly highlight strip
                 for(int i = 0; i < 7; i++){
-                    float ca2 = -0.85f + i*0.28f - PI*0.5f;
-                    float cLen = H(8.f + sinf(t*3.2f+i*0.5f+ph)*2.0f);
-                    Vector2 cFrom = {sX+sway, sY-H(22.f)};
-                    Vector2 cTo = {cFrom.x+cosf(ca2)*cLen, cFrom.y+sinf(ca2)*cLen};
-                    DrawLineEx(cFrom,cTo,H(1.4f),ColorAlpha({18,148,192,255},ra*(0.65f-i*0.05f)));
-                    DrawCircleV(cTo,H(1.2f),ColorAlpha({28,195,230,255},ra*0.62f));
-                    // sub-spine branching
-                    DrawLineEx({cFrom.x+cosf(ca2)*cLen*0.6f, cFrom.y+sinf(ca2)*cLen*0.6f},
-                               {cFrom.x+cosf(ca2+0.4f)*cLen*0.5f, cFrom.y+sinf(ca2+0.4f)*cLen*0.5f},
-                               H(0.6f),ColorAlpha({18,148,192,255},ra*0.38f));
+                    DrawCircleV({sX+sway+H(1.5f), sY+H(bY[i]+1.5f)}, H(bW[i]*0.45f),
+                        ColorAlpha({18,120,158,255}, ra*0.38f));
                 }
-                // dorsal fin — fan of thin vibrating spines
+                // ── curled tail ──
                 for(int i = 0; i < 10; i++){
-                    float fa = -0.7f + i * 0.16f;
-                    float flen = H(10.f + sinf(t*7.5f + i*0.4f + ph)*2.8f);
-                    DrawLineEx({sX+sway, sY-H(8.f)},
-                        {sX+sway+cosf(fa-PI*.5f)*flen, sY-H(8.f)+sinf(fa-PI*.5f)*flen},
-                        H(0.95f), ColorAlpha({22,182,212,255}, ra*(0.58f-i*0.04f)));
+                    float ta = PI*0.5f + i*0.32f;
+                    float tr = H(9.f - i*0.7f);
+                    float tx = sX + sway - H(2.f) + cosf(ta)*tr;
+                    float ty = sY + H(24.f) + i*H(2.2f);
+                    DrawCircleV({tx,ty}, H(2.8f-i*0.22f), ColorAlpha({10,75,108,255},ra*0.82f));
                 }
-                // bony ring plates along trunk — each plate is a distinct ellipse with outline
-                for(int i = 0; i < 11; i++){
-                    float ry = sY - H(5.f) + i*H(2.9f);
-                    float rw = H(6.5f - i*0.22f + sinf(i*0.95f)*0.6f);
-                    float rh = H(1.6f);
-                    DrawEllipse((int)(sX+sway),(int)ry,(int)rw,(int)rh,
-                        ColorAlpha({12,100,135,255},ra*0.88f));
-                    DrawEllipseLines((int)(sX+sway),(int)ry,(int)rw,(int)rh,
-                        ColorAlpha({7,58,88,255},ra*0.62f));
-                    // spine nub on right side of each plate
-                    DrawCircleV({sX+sway+rw,ry},H(1.1f),ColorAlpha({22,155,190,255},ra*0.52f));
+                // ── neck bend — small ellipse bridging trunk to head ──
+                DrawEllipse((int)(sX+sway-H(2.f)),(int)(sY-H(4.f)),(int)H(4.f),(int)H(4.f),
+                    ColorAlpha({12,88,122,255},ra*0.80f));
+                // ── head — distinct rounded snout profile ──
+                DrawCircleV({sX+sway-H(5.f),sY-H(10.f)},H(7.f),ColorAlpha({10,75,108,255},ra*0.88f));
+                DrawCircleV({sX+sway-H(5.f),sY-H(10.f)},H(5.f),ColorAlpha({14,95,132,255},ra*0.72f));
+                // snout — long tube pointing forward-right
+                DrawLineEx({sX+sway-H(3.f),sY-H(14.f)},{sX+sway+H(11.f),sY-H(17.f)},
+                    H(3.0f), ColorAlpha({10,75,108,255},ra*0.88f));
+                DrawLineEx({sX+sway-H(3.f),sY-H(14.f)},{sX+sway+H(11.f),sY-H(17.f)},
+                    H(1.2f), ColorAlpha({18,120,158,255},ra*0.55f));
+                // coronet — 3 short spines on top of head
+                for(int i = 0; i < 3; i++){
+                    float ca2 = -PI*0.75f + i*0.28f;
+                    DrawLineEx({sX+sway-H(7.f),sY-H(15.f)},
+                        {sX+sway-H(7.f)+cosf(ca2)*H(5.f+i*1.f), sY-H(15.f)+sinf(ca2)*H(5.f+i*1.f)},
+                        H(1.1f), ColorAlpha({18,148,192,255}, ra*0.60f));
                 }
-                // segmented neck — tapering circles
+                // dorsal fin — 5 thin spines fanning off mid-trunk
                 for(int i = 0; i < 5; i++){
-                    float ny2 = sY-H(4.5f)-i*H(3.6f);
-                    float nw  = H(6.8f-i*0.65f);
-                    DrawCircleV({sX+sway,ny2},nw,    ColorAlpha({12,100,130,255},ra*0.90f));
-                    DrawCircleV({sX+sway,ny2},nw*0.65f,ColorAlpha({20,155,188,255},ra*0.76f));
-                    DrawEllipseLines((int)(sX+sway),(int)ny2,(int)nw,(int)(nw*0.7f),
-                        ColorAlpha({7,54,82,255},ra*0.45f));
+                    float fa = -PI*0.5f - 0.3f + i*0.15f;
+                    float flen = H(7.f + sinf(t*6.f+i*0.5f+ph)*1.8f);
+                    DrawLineEx({sX+sway+H(5.f), sY+H(4.f)},
+                        {sX+sway+H(5.f)+cosf(fa)*flen, sY+H(4.f)+sinf(fa)*flen},
+                        H(0.85f), ColorAlpha({22,165,205,255}, ra*(0.55f-i*0.06f)));
                 }
-                // snout — long distinctive tube
-                DrawLineEx({sX+sway,sY-H(22.f)},{sX+sway+H(15.f),sY-H(25.f)},H(2.8f),
-                    ColorAlpha({15,120,155,255},ra*0.88f));
-                DrawLineEx({sX+sway,sY-H(22.f)},{sX+sway+H(15.f),sY-H(25.f)},H(1.1f),
-                    ColorAlpha({24,165,200,255},ra*0.58f));
-                DrawCircleV({sX+sway+H(15.f),sY-H(25.f)},H(2.0f),ColorAlpha({8,62,90,255},ra*0.92f));
-                // eye with socket, iris, pupil, highlight
-                DrawCircleV({sX+sway+H(4.5f),sY-H(20.f)},H(3.8f),ColorAlpha({3,20,35,255},ra*0.98f)); // socket
-                DrawCircleV({sX+sway+H(4.5f),sY-H(20.f)},H(3.0f),ColorAlpha({5,35,55,255},ra*0.96f));
-                DrawCircleV({sX+sway+H(4.5f),sY-H(20.f)},H(2.2f),ColorAlpha({0,205,245,255},ra*0.82f)); // iris
-                DrawCircleV({sX+sway+H(4.5f),sY-H(20.f)},H(1.1f),ColorAlpha(VP_BLACK,ra)); // pupil
-                DrawCircleV({sX+sway+H(5.2f),sY-H(21.f)},H(0.75f),ColorAlpha(VP_WHITE,ra*0.92f)); // highlight
-                DrawNeonCircle({sX+sway+H(4.5f),sY-H(20.f)},H(3.0f),VP_CYAN,ra*0.24f);
-                // pectoral fin — small curved fin behind the jaw
-                DrawEllipse((int)(sX+sway+H(5.5f)),(int)(sY-H(11.f)),(int)H(7.f),(int)H(4.5f),
-                    ColorAlpha({10,90,122,255},ra*0.72f));
-                DrawEllipseLines((int)(sX+sway+H(5.5f)),(int)(sY-H(11.f)),(int)H(7.f),(int)H(4.5f),
-                    ColorAlpha({7,54,82,255},ra*0.56f));
-                // bioluminescent belly stripe pulses travelling down body
-                for(int i = 0; i < 5; i++){
-                    float bage = fmodf(t*1.8f+i*0.22f+ph,1.f);
-                    DrawCircleLinesV({sX+sway,sY+H(i*2.9f)},H(6.0f-i*0.5f),
-                        ColorAlpha({0,255,210,255},ra*(1.f-bage)*0.62f));
-                }
-                // bioluminescent side dots — alternating left/right
-                for(int i = 0; i < 9; i++){
-                    float bPulse2 = 0.4f+0.6f*sinf(t*2.6f+i*0.4f+ph);
-                    float bdx = (i%2==0) ? H(3.0f) : -H(3.0f);
-                    DrawCircleV({sX+sway+bdx, sY-H(5.f)+i*H(2.8f)},H(0.9f),
-                        ColorAlpha({0,225,255,255},ra*bPulse2*0.58f));
-                    DrawNeonCircle({sX+sway+bdx, sY-H(5.f)+i*H(2.8f)},H(1.6f),
-                        VP_CYAN,ra*bPulse2*0.22f);
-                }
-                // curled tail — tightly coiled prehensile grip, more segments
-                for(int i = 0; i < 14; i++){
-                    float ta2 = i*0.30f;
-                    float tr2 = H(8.5f-i*0.50f);
-                    float tx2 = sX+sway-H(2.f)+cosf(PI*.5f+ta2)*tr2;
-                    float ty2 = sY+H(8.f)+i*H(2.9f);
-                    float ts2 = H(4.2f-i*0.25f);
-                    DrawCircleV({tx2,ty2},ts2,ColorAlpha({14,110,142,255},ra*0.86f));
-                    DrawCircleV({tx2,ty2},ts2*0.62f,ColorAlpha({22,158,192,255},ra*0.70f));
-                    // plate outline every other segment
-                    if(i%2==0){
-                        DrawEllipseLines((int)tx2,(int)ty2,(int)ts2,(int)(ts2*0.58f),
-                            ColorAlpha({7,54,82,255},ra*0.42f));
-                    }
+                // eye
+                DrawCircleV({sX+sway-H(2.5f),sY-H(12.f)},H(2.0f),ColorAlpha({2,12,20,255},ra*0.98f));
+                DrawCircleV({sX+sway-H(2.5f),sY-H(12.f)},H(1.2f),ColorAlpha({0,200,240,255},ra*0.85f));
+                DrawCircleV({sX+sway-H(2.5f),sY-H(12.f)},H(0.55f),ColorAlpha(VP_BLACK,ra));
+                DrawCircleV({sX+sway-H(2.f),sY-H(12.6f)},H(0.4f),ColorAlpha(VP_WHITE,ra*0.80f));
+                // bioluminescent belly dots — slow drift down the body
+                for(int i = 0; i < 4; i++){
+                    float bage = fmodf(t*1.6f+i*0.28f+ph,1.f);
+                    DrawCircleV({sX+sway, sY+H(bY[i*2])}, H(bW[i*2]*0.55f),
+                        ColorAlpha({0,220,255,255}, ra*(1.f-bage)*0.45f));
                 }
             }
             else if(e.subType == 6){ // SPACE MANTA RAY — vast flat ray, glides without effort
@@ -1048,71 +961,102 @@ void DrawEasterEggs(Game& g, float t, float revealAlpha){
                 DrawCircleV({sx2+S(1.2f),sy2-S(1.f)},S(0.8f),ColorAlpha(VP_BLACK,ra*0.9f));
             }
             }
-            else if(e.subType == 5){ // FROST YETI — large fluffy snow creature with icicle claws
-                float shiver = sinf(t * 8.f + ph) * S(0.8f);
-                float breath = fmodf(t * 1.2f + ph, 1.f);
-                // shadow
-                DrawEllipse((int)sp.x, (int)(spY + S(28.f)), (int)S(18.f), (int)S(5.f),
-                    ColorAlpha({100,160,200,255}, ra*0.20f));
-                // legs — wide stumps
-                for(int side = -1; side <= 1; side += 2){
-                    DrawEllipse((int)(sp.x + side*S(8.f)), (int)(spY + S(22.f)),
-                        (int)S(7.f), (int)S(9.f), ColorAlpha({200,230,255,255}, ra*0.88f));
-                    DrawCircleV({sp.x + side*S(8.f), spY + S(30.f)}, S(6.f),
-                        ColorAlpha({220,240,255,255}, ra*0.82f));
-                    // icicle toes
-                    for(int i = -1; i <= 1; i++){
-                        float tx2 = sp.x + side*S(8.f) + i*S(3.f);
-                        DrawLineEx({tx2, spY + S(32.f)}, {tx2, spY + S(38.f) + shiver},
-                            S(2.f), ColorAlpha({180,220,255,255}, ra*0.80f));
-                        DrawCircleV({tx2, spY + S(38.f) + shiver}, S(1.f),
-                            ColorAlpha(VP_WHITE, ra*0.9f));
+            else if(e.subType == 5){ // FROST YETI — big fluffy snow guardian
+                float ysc = sc * 1.05f; auto Y = [&](float v){ return v * ysc; };
+                float bob     = sinf(t*0.5f+ph)*Y(1.5f);
+                float armSway = sinf(t*0.65f+ph)*Y(3.f);
+                float shiver  = sinf(t*9.f+ph)*Y(0.5f);
+                float glowP   = 0.5f+0.5f*sinf(t*1.4f+ph);
+                float breathT = fmodf(t*0.8f+ph, 2.5f);
+                Color fw={210,235,255,255}; Color fm={230,245,255,255};
+                Color fl={248,252,255,255}; Color ic={155,210,255,255};
+                Color ih={220,245,255,255};
+                // legs
+                for(int s=-1;s<=1;s+=2){
+                    float lx=sp.x+s*Y(8.f);
+                    DrawEllipse((int)lx,(int)(spY+Y(24.f)),(int)Y(7.f),(int)Y(10.f),ColorAlpha(fw,ra*0.90f));
+                    DrawEllipse((int)(lx-Y(1.f)),(int)(spY+Y(20.f)),(int)Y(5.f),(int)Y(6.f),ColorAlpha(fm,ra*0.52f));
+                    DrawEllipse((int)lx,(int)(spY+Y(32.f)),(int)Y(8.f),(int)Y(5.f),ColorAlpha(fw,ra*0.88f));
+                    for(int i=-1;i<=1;i++){
+                        float tx2=lx+i*Y(3.f);
+                        DrawLineEx({tx2,spY+Y(35.f)},{tx2+(float)i*Y(0.8f),spY+Y(40.f)},Y(2.2f),ColorAlpha(ic,ra*0.80f));
+                        DrawCircleV({tx2+(float)i*Y(0.8f),spY+Y(40.f)},Y(1.2f),ColorAlpha(ih,ra*0.92f));
                     }
                 }
                 // body
-                DrawCircleV({sp.x, spY + S(8.f)}, S(18.f), ColorAlpha({195,225,255,255}, ra*0.90f));
-                DrawCircleV({sp.x, spY + S(8.f)}, S(15.f), ColorAlpha({215,238,255,255}, ra*0.82f));
-                // fur texture tufts
-                for(int i = 0; i < 8; i++){
-                    float fa = i*(2*PI/8.f) + t*0.1f + ph;
-                    float fr = S(17.f);
-                    DrawCircleV({sp.x + cosf(fa)*fr, spY + S(8.f) + sinf(fa)*fr},
-                        S(3.5f), ColorAlpha({230,245,255,255}, ra*0.65f));
+                DrawCircleV({sp.x,spY+Y(8.f)+bob},Y(19.f),ColorAlpha(fw,ra*0.93f));
+                DrawCircleV({sp.x-Y(3.f),spY+Y(5.f)+bob},Y(14.f),ColorAlpha(fm,ra*0.62f));
+                DrawEllipse((int)(sp.x+Y(3.f)),(int)(spY+Y(11.f)+bob),(int)Y(9.f),(int)Y(7.f),ColorAlpha(fl,ra*0.30f));
+                for(int i=0;i<10;i++){
+                    float fa=i*(2.f*PI/10.f)+ph*0.3f;
+                    DrawCircleV({sp.x+cosf(fa)*Y(18.f),spY+Y(8.f)+bob+sinf(fa)*Y(18.f)},Y(4.f),ColorAlpha(fm,ra*0.65f));
                 }
                 // arms
-                for(int side = -1; side <= 1; side += 2){
-                    float aoff = sinf(t*0.8f + ph) * side * S(3.f);
-                    DrawEllipse((int)(sp.x + side*S(19.f)), (int)(spY + aoff),
-                        (int)S(6.f), (int)S(12.f), ColorAlpha({200,228,255,255}, ra*0.88f));
-                    // icicle claws
-                    for(int i = 0; i < 3; i++){
-                        float cx2 = sp.x + side*S(23.f) + (i-1)*S(3.f);
-                        float cy2 = spY + aoff + S(12.f);
-                        DrawLineEx({cx2, cy2}, {cx2 + side*S(2.f), cy2 + S(7.f)},
-                            S(2.2f), ColorAlpha({160,210,255,255}, ra*0.85f));
-                        DrawCircleV({cx2 + side*S(2.f), cy2 + S(7.f)}, S(1.2f),
-                            ColorAlpha(VP_WHITE, ra));
+                for(int s=-1;s<=1;s+=2){
+                    float ax=sp.x+s*Y(20.f), ay=spY+Y(2.f)+bob+armSway*(float)s;
+                    DrawEllipse((int)ax,(int)ay,(int)Y(6.5f),(int)Y(11.f),ColorAlpha(fw,ra*0.90f));
+                    DrawEllipse((int)(ax-s*Y(1.f)),(int)(ay-Y(2.f)),(int)Y(4.5f),(int)Y(7.f),ColorAlpha(fm,ra*0.50f));
+                    DrawCircleV({ax+(float)s*Y(1.f),ay+Y(12.f)},Y(6.f),ColorAlpha(fw,ra*0.88f));
+                    for(int i=0;i<3;i++){
+                        float cx=ax+(float)s*Y(1.f)+(float)(i-1)*Y(3.f);
+                        DrawLineEx({cx,ay+Y(17.f)},{cx+(float)s*Y(1.f),ay+Y(23.f)},Y(2.5f),ColorAlpha(ic,ra*0.82f));
+                        DrawCircleV({cx+(float)s*Y(1.f),ay+Y(23.f)},Y(1.1f),ColorAlpha(ih,ra*0.92f));
                     }
                 }
                 // head
-                DrawCircleV({sp.x + shiver, spY - S(12.f)}, S(14.f), ColorAlpha({205,232,255,255}, ra*0.90f));
-                DrawCircleV({sp.x + shiver, spY - S(12.f)}, S(11.f), ColorAlpha({225,242,255,255}, ra*0.82f));
+                float hx=sp.x+shiver, hy=spY-Y(12.f)+bob;
+                DrawCircleV({hx,hy},Y(15.f),ColorAlpha(fw,ra*0.94f));
+                DrawCircleV({hx-Y(2.f),hy-Y(2.f)},Y(11.f),ColorAlpha(fm,ra*0.65f));
+                DrawEllipse((int)(hx-Y(3.f)),(int)(hy-Y(5.f)),(int)Y(7.f),(int)Y(5.f),ColorAlpha(fl,ra*0.35f));
+                for(int i=0;i<6;i++){
+                    float fa=i*(2.f*PI/6.f)-PI*0.5f+ph*0.2f;
+                    DrawCircleV({hx+cosf(fa)*Y(13.5f),hy+sinf(fa)*Y(13.5f)},Y(4.5f),ColorAlpha(fm,ra*0.62f));
+                }
+                // 3 short rounded icicles on top
+                for(int i=-1;i<=1;i++){
+                    float ix=hx+(float)i*Y(5.f);
+                    float ilen=Y(8.f-fabsf((float)i)*1.5f);
+                    DrawLineEx({ix,hy-Y(13.f)},{ix+(float)i*Y(0.8f),hy-Y(13.f)-ilen},Y(4.f-fabsf((float)i)*0.5f),ColorAlpha(ic,ra*0.82f));
+                    DrawEllipse((int)(ix+(float)i*Y(0.8f)),(int)(hy-Y(13.f)-ilen),(int)Y(3.f),(int)Y(2.f),ColorAlpha(ih,ra*0.90f));
+                    DrawNeonCircle({ix+(float)i*Y(0.8f),hy-Y(13.f)-ilen},Y(3.5f),{180,225,255,255},ra*glowP*0.28f);
+                }
                 // eyes
-                for(int side = -1; side <= 1; side += 2){
-                    DrawCircleV({sp.x + shiver + side*S(5.f), spY - S(14.f)}, S(3.f),
-                        ColorAlpha({20,80,140,255}, ra*0.95f));
-                    DrawCircleV({sp.x + shiver + side*S(5.f), spY - S(14.f)}, S(1.8f),
-                        ColorAlpha({0,180,255,255}, ra*0.9f));
-                    DrawCircleV({sp.x + shiver + side*S(5.f), spY - S(14.f)}, S(0.8f),
-                        ColorAlpha(VP_WHITE, ra));
+                for(int s=-1;s<=1;s+=2){
+                    float ex2=hx+s*Y(5.f), ey2=hy-Y(3.5f);
+                    DrawCircleV({ex2,ey2},Y(4.5f),ColorAlpha({30,70,120,255},ra*0.95f));
+                    DrawCircleV({ex2,ey2},Y(3.5f),ColorAlpha({15,100,190,255},ra*0.90f));
+                    DrawCircleV({ex2,ey2},Y(2.2f),ColorAlpha({55,165,240,255},ra*0.82f));
+                    DrawCircleV({ex2,ey2},Y(1.f),ColorAlpha(VP_BLACK,ra));
+                    DrawCircleV({ex2-Y(0.8f),ey2-Y(1.f)},Y(0.7f),ColorAlpha(VP_WHITE,ra*0.88f));
+                    DrawNeonCircle({ex2,ey2},Y(4.f),{120,200,255,255},ra*0.32f);
                 }
-                // breath cloud
-                for(int i = 0; i < 4; i++){
-                    float boff = fmodf(breath + i*0.25f, 1.f);
-                    DrawCircleV({sp.x + shiver + S(2.f + boff*12.f), spY - S(5.f) - boff*S(8.f)},
-                        S(2.f + boff*2.f), ColorAlpha(VP_WHITE, ra*(1.f-boff)*0.35f));
+                // nose
+                DrawCircleV({hx,hy+Y(2.f)},Y(2.f),ColorAlpha({80,130,185,255},ra*0.88f));
+                DrawCircleV({hx,hy+Y(2.f)},Y(1.f),ColorAlpha({120,175,220,255},ra*0.68f));
+                // rosy cheeks
+                for(int s=-1;s<=1;s+=2)
+                    DrawEllipse((int)(hx+s*Y(6.f)),(int)(hy+Y(5.f)),(int)Y(3.5f),(int)Y(2.f),ColorAlpha({175,205,240,255},ra*0.42f));
+                // happy mouth arc (no teeth)
+                for(int i=0;i<5;i++){
+                    float ma=(float)i/4.f;
+                    DrawLineEx(
+                        {hx+(-Y(4.f)+ma*Y(8.f)),        hy+Y(7.5f)+sinf(ma*PI)*Y(2.f)},
+                        {hx+(-Y(4.f)+(ma+0.25f)*Y(8.f)),hy+Y(7.5f)+sinf((ma+0.25f)*PI)*Y(2.f)},
+                        Y(1.4f),ColorAlpha({60,110,165,255},ra*0.78f));
                 }
-                DrawNeonCircle({sp.x + shiver, spY - S(12.f)}, S(14.f), {180,220,255,255}, ra*0.20f);
+                // frosty breath wisps
+                if(breathT < 2.0f){
+                    float bf=breathT/2.0f;
+                    for(int i=0;i<5;i++){
+                        float bi=(float)i/4.f;
+                        float bp=fmodf(bf+bi*0.22f,1.f);
+                        float bx=hx+sinf(bp*3.2f+i*1.f)*Y(3.f);
+                        float by=hy+Y(9.f)-bp*Y(16.f);
+                        DrawCircleV({bx,by},Y(1.4f+bp*2.2f),ColorAlpha({222,240,255,255},ra*(1.f-bp)*0.36f));
+                    }
+                }
+                DrawNeonCircle({hx,hy},Y(16.f),{175,220,255,255},ra*0.15f);
+                DrawNeonCircle({sp.x,spY+Y(8.f)+bob},Y(21.f),{155,205,255,255},ra*0.08f);
             }
             else if(e.subType == 6){ // ICE SPRITE — tiny winged fairy of living ice crystals
                 float sparkle6=fmodf(t*2.5f+ph,1.f);

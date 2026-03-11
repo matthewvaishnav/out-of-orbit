@@ -2847,218 +2847,13 @@ int main(){
                         b.life=160; b.active=true; b.col=VP_RED; b.glowR=4;
                         BossBulletPoolPush(g.bossBullets, g.bossBulletRover, b);
                     }
-            // ── SPATIAL GRID UPDATE ──
-            g.grid.Clear();
-            for(int i=0; i<(int)g.enemies.size(); i++){
-                auto& e = g.enemies[i]; if(!e.active) continue;
-                Vector2 sp = W2S(g, e.pos); e.renderPos = sp;
-                int gx = (int)(sp.x / GRID_CELL_SIZE) + 1;
-                int gy = (int)(sp.y / GRID_CELL_SIZE) + 1;
-                if(gx>=0 && gx<GRID_COLS && gy>=0 && gy<GRID_ROWS) g.grid.cells[gx][gy].push_back(i);
-            }
-
-            // ── BULLETS ──
-            bool pier=g.ucache.piercing,rico=g.ucache.ricochet,expl=g.ucache.explosive;
-            for(auto& b:g.bullets){
-                if(!b.active)continue;
-                b.renderPos = W2S(g, b.pos);
-
-                // ── SOUL SWARM homing: steer toward nearest enemy ──
-                if(b.homing && b.prayerType==2){
-                    float bestDist2=99999.f*99999.f; int bestIdx=-1;
-                    for(int ei=0;ei<(int)g.enemies.size();ei++){
-                        auto& e=g.enemies[ei]; if(!e.active)continue;
-                        float ddx=e.pos.x-b.pos.x,ddy=e.pos.y-b.pos.y;
-                        float dist2=ddx*ddx+ddy*ddy;
-                        if(dist2<bestDist2){bestDist2=dist2;bestIdx=ei;}
-                    }
-                    if(bestIdx>=0){
-                        auto& te=g.enemies[bestIdx];
-                        float ddx=te.pos.x-b.pos.x,ddy=te.pos.y-b.pos.y;
-                        float dist2=ddx*ddx+ddy*ddy;
-                        if(dist2>1.f){
-                            float dd=sqrtf(dist2);
-                            float tx=ddx/dd,ty=ddy/dd;
-                            float spd=sqrtf(b.vel.x*b.vel.x+b.vel.y*b.vel.y);
-                            float turnRate=b.homingStr*(1.f+0.015f*(160.f-b.life));
-                            b.vel.x+=(tx*spd-b.vel.x)*turnRate*dt;
-                            b.vel.y+=(ty*spd-b.vel.y)*turnRate*dt;
-                            float ns=sqrtf(b.vel.x*b.vel.x+b.vel.y*b.vel.y);
-                            if(ns>1.f){b.vel.x=b.vel.x/ns*spd;b.vel.y=b.vel.y/ns*spd;}
-                        }
-                    }
                 }
 
-                // ── SOLAR FLARE burst countdown ──
-                if(b.prayerType==0 && b.burstTimer>0.f){
-                    b.burstTimer-=1.f;
-                    if(b.burstTimer<=0.f){
-                        SpawnRing(g,b.pos,VP_ORANGE,90,.5f); SpawnRing(g,b.pos,VP_RED,60,.35f);
-                        SpawnParticles(g,b.pos,VP_ORANGE,12,100,true); SpawnParticles(g,b.pos,VP_YELLOW,6,70,false);
-                        g.screenShake=.15f;
-                        for(auto& en:g.enemies){
-                            if(!en.active)continue;
-                            float ex2=en.pos.x-b.pos.x,ey2=en.pos.y-b.pos.y;
-                            if(ex2*ex2+ey2*ey2<6400.f) HitEnemy(g,en,b.damage);
-                        }
-                        if(g.boss.active){float bx2=g.boss.pos.x-b.pos.x,by2=g.boss.pos.y-b.pos.y;if(bx2*bx2+by2*by2<8100.f)HitBoss(g,2);}
-                        b.active=false; continue;
-                    }
-                }
+                g.boss.angle+=enraged?.08f:.03f;
+                g.boss.angle2-=enraged?.13f:.05f;
 
-                b.pos.x+=b.vel.x*dt; b.pos.y+=b.vel.y*dt; b.life--;
-                if(b.life<=0){b.active=false;continue;}
-
-                bool hit=false;
-                bool isPiercing=(pier || b.prayerType==1);
-                bool isSolarFlare=(b.prayerType==0);
-
-                // Grid-optimized collision
-                int gx = (int)(b.renderPos.x / GRID_CELL_SIZE) + 1;
-                int gy = (int)(b.renderPos.y / GRID_CELL_SIZE) + 1;
-                for(int ox=-1; ox<=1; ox++){
-                    for(int oy=-1; oy<=1; oy++){
-                        int cx=gx+ox, cy=gy+oy;
-                        if(cx<0||cx>=GRID_COLS||cy<0||cy>=GRID_ROWS) continue;
-                        for(int ei : g.grid.cells[cx][cy]){
-                            auto& e = g.enemies[ei]; if(!e.active) continue;
-                            float dx=b.pos.x-e.pos.x,dy=b.pos.y-e.pos.y;
-                            float hitR = isSolarFlare ? e.radius+6.f : e.radius+3.f;
-                            if(dx*dx+dy*dy < hitR*hitR){
-                                if(expl){
-                                    SpawnRing(g,b.pos,VP_RED,80);SpawnParticles(g,b.pos,VP_RED,14,100,true); g.screenShake=.2f;
-                                    for(auto& en:g.enemies){if(!en.active)continue;float ex2=en.pos.x-b.pos.x,ey2=en.pos.y-b.pos.y;if(ex2*ex2+ey2*ey2<6400)HitEnemy(g,en,b.damage);}
-                                } else if(isSolarFlare){
-                                    SpawnRing(g,b.pos,VP_ORANGE,80,.45f); SpawnRing(g,b.pos,VP_RED,50,.30f);
-                                    SpawnParticles(g,b.pos,VP_ORANGE,10,95,true); g.screenShake=.12f;
-                                    for(auto& en:g.enemies){if(!en.active)continue;float ex2=en.pos.x-b.pos.x,ey2=en.pos.y-b.pos.y;if(ex2*ex2+ey2*ey2<6400.f)HitEnemy(g,en,b.damage);}
-                                    if(g.boss.active){float bx2=g.boss.pos.x-b.pos.x,by2=g.boss.pos.y-b.pos.y;if(bx2*bx2+by2*by2<8100.f)HitBoss(g,2);}
-                                    b.active=false; b.burstTimer=0.f; hit=true;
-                                } else { HitEnemy(g,e,b.damage); }
-                                if(!isPiercing && !isSolarFlare){b.active=false;hit=true;}
-                                SpawnParticles(g,b.pos,VP_YELLOW,3,60,true);
-                                if(hit) break;
-                            }
-                        }
-                        if(hit) break;
-                    }
-                    if(hit) break;
-                }
-                if(b.active&&g.boss.active){
-                    float dx=b.pos.x-g.boss.pos.x,dy=b.pos.y-g.boss.pos.y;
-                    float bossHitR = g.boss.radius + 3.f;
-                    if(dx*dx+dy*dy < bossHitR*bossHitR){
-                        if(isSolarFlare){
-                            SpawnRing(g,b.pos,VP_ORANGE,80,.45f);SpawnParticles(g,b.pos,VP_ORANGE,8,80,true);
-                            HitBoss(g,2); b.active=false;
-                        } else { HitBoss(g,1); if(!isPiercing)b.active=false; }
-                        SpawnParticles(g,b.pos,VP_YELLOW,3,60,true);
-                    }
-                }
-            }
-
-            // ── ENEMIES ──
-            for(auto& e:g.enemies){
-                if(!e.active)continue;
-                float dx=g.playerPos.x-e.pos.x, dy=g.playerPos.y-e.pos.y;
-                float d2=dx*dx+dy*dy;
-                if(d2>0.0001f){
-                    float dist=sqrtf(d2);
-                    float sp2=ENEMY_DEFS[e.type].speed*(1+g.wave*.07f);float steer=(e.type==E_FAST)?3.5f:1.8f;e.vel.x+=(dx/dist*sp2-e.vel.x)*steer*dt;e.vel.y+=(dy/dist*sp2-e.vel.y)*steer*dt;
-                }
-                e.pos.x+=e.vel.x*dt;e.pos.y+=e.vel.y*dt;e.angle+=e.spinSpeed;
-                float px=e.pos.x-g.playerPos.x,py=e.pos.y-g.playerPos.y;
-                float pdist2=px*px+py*py;
-                float playerRadius = (g.wave == 2) ? PLAYER_RADIUS_L2 : PLAYER_RADIUS;
-                float grazeR = e.radius+22.f;
-                if(pdist2 < grazeR*grazeR && pdist2 > (e.radius+playerRadius)*(e.radius+playerRadius) && g.nearMissFlash<=0){
-                    g.nearMissFlash = 0.35f; SpawnParticles(g,g.playerPos,VP_YELLOW,5,70,true);
-                }
-                if(pdist2 < (e.radius+playerRadius)*(e.radius+playerRadius)){e.active=false;PlayerHit(g);if(g.lives<=0)g.state=GAMEOVER;}
-                if(e.hp<=0)e.active=false;
-
-                // ── ENEMY SHOOTING ──
-                e.shootTimer-=dt;
-                if(e.type==E_VOID && e.shootTimer<=0.f && pdist2<176400.f){
-                    float shootInterval=std::max(0.7f, 1.8f-g.wave*0.04f); e.shootTimer=shootInterval;
-                    float baseA=atan2f(dy,dx); float spreads[]={-0.20f,0.f,0.20f};
-                    for(float sp3:spreads){
-                        float fa=baseA+sp3; float bspd=200.f+g.wave*5.f;
-                        Bullet b{}; b.active=true; b.life=120; b.pos={e.pos.x+cosf(fa)*e.radius,e.pos.y+sinf(fa)*e.radius};
-                        b.vel={cosf(fa)*bspd,sinf(fa)*bspd}; b.col=VP_HOTPINK; b.glowR=5; b.damage=1; b.prayerType=-1;
-                        BossBulletPoolPush(g.bossBullets, g.bossBulletRover, b);
-                    }
-                }
-                if(e.type==E_TANK && e.shootTimer<=0.f && pdist2<144400.f){
-                    float shootInterval=std::max(1.4f, 3.2f-g.wave*0.06f); e.shootTimer=shootInterval+(float)(rand()%100)/100.f;
-                    float fa=atan2f(dy,dx);
-                    Bullet b{}; b.active=true; b.life=140; b.pos={e.pos.x+cosf(fa)*e.radius,e.pos.y+sinf(fa)*e.radius};
-                    b.vel={cosf(fa)*(170.f+g.wave*4.f),sinf(fa)*(170.f+g.wave*4.f)};
-                    b.col=VP_PURPLE; b.glowR=7; b.damage=2; b.prayerType=-1;
-                    BossBulletPoolPush(g.bossBullets, g.bossBulletRover, b);
-                }
-            }
-            g.enemies.erase(std::remove_if(g.enemies.begin(),g.enemies.end(),[](Enemy& e){return !e.active;}),g.enemies.end());
-
-            // ── BOSS ──
-            if(g.boss.active){
-                float dx=g.playerPos.x-g.boss.pos.x, dy=g.playerPos.y-g.boss.pos.y, d2=dx*dx+dy*dy;
-                float baseSpd=BOSS_DEFS[std::min(wd.bossIdx,3)].speed*(1+g.wave*.025f);
-                float enraged=(g.boss.phase==1); float spd=baseSpd*(enraged?1.7f:1.f);
-                g.boss.dashCooldown=std::max(0.f,g.boss.dashCooldown-dt);
-                if(g.boss.dashTimer>0){ g.boss.pos.x+=g.boss.dashVel.x*dt; g.boss.pos.y+=g.boss.dashVel.y*dt; g.boss.dashTimer-=dt; }
-                else {
-                    float preferDist=enraged?140.f:200.f; g.boss.orbitAngle+=dt*(enraged?1.6f:0.9f);
-                    float targetX=g.playerPos.x+cosf(g.boss.orbitAngle)*preferDist, targetY=g.playerPos.y+sinf(g.boss.orbitAngle)*preferDist;
-                    float tdx=targetX-g.boss.pos.x, tdy=targetY-g.boss.pos.y, td2=tdx*tdx+tdy*tdy;
-                    if(td2>.25f){ float tdist=sqrtf(td2); g.boss.pos.x+=tdx/tdist*spd*dt; g.boss.pos.y+=tdy/tdist*spd*dt; }
-                    if(g.boss.dashCooldown<=0){
-                        float dashSpd=enraged?520.f:340.f; float dashInterval=enraged?2.0f:3.5f;
-                        g.boss.dashTimer=0.28f; g.boss.dashCooldown=dashInterval;
-                        if(d2>0.0001f){ float dist=sqrtf(d2); g.boss.dashVel={dx/dist*dashSpd, dy/dist*dashSpd}; }
-                        SpawnRing(g,g.boss.pos,g.boss.col,40,.2f); g.screenShake=std::max(g.screenShake,.12f);
-                    }
-                }
-                g.boss.shootTimer-=dt; float shootInterval=enraged?0.45f:0.85f;
-                if(g.boss.shootTimer<=0){
-                    g.boss.shootTimer=shootInterval; g.boss.shootPattern=(g.boss.shootPattern+1)%5;
-                    float toPlayer=atan2f(g.playerPos.y-g.boss.pos.y, g.playerPos.x-g.boss.pos.x);
-                    float bspd=enraged?260.f:190.f;
-                    int pat=g.boss.shootPattern;
-                    if(pat==0||pat==3){
-                        for(int i=-1;i<=1;i++){
-                            Bullet b{}; b.pos=g.boss.pos; b.vel={cosf(toPlayer+i*.15f)*bspd, sinf(toPlayer+i*.15f)*bspd};
-                            b.life=180; b.active=true; b.col=g.boss.col; b.glowR=5;
-                            BossBulletPoolPush(g.bossBullets, g.bossBulletRover, b);
-                        }
-                    } else if(pat==1||pat==4){
-                        for(int i=0;i<8;i++){
-                            float a=i*(PI/4.f)+t;
-                            Bullet b{}; b.pos=g.boss.pos; b.vel={cosf(a)*bspd*.8f, sinf(a)*bspd*.8f};
-                            b.life=150; b.active=true; b.col=VP_PURPLE; b.glowR=4;
-                            BossBulletPoolPush(g.bossBullets, g.bossBulletRover, b);
-                        }
-                    } else {
-                        float perp=toPlayer+PI*.5f; float s2=bspd*1.1f;
-                        for(float a2:{toPlayer,perp,perp+PI}){
-                            Bullet b{}; b.pos=g.boss.pos; b.vel={cosf(a2)*s2, sinf(a2)*s2};
-                            b.life=200; b.active=true; b.col=VP_CYAN; b.glowR=6;
-                            BossBulletPoolPush(g.bossBullets, g.bossBulletRover, b);
-                        }
-                    }
-                    g.screenShake=std::max(g.screenShake,.06f);
-                }
-                if(enraged){
-                    static float sprayT=0; sprayT-=dt;
-                    if(sprayT<=0){
-                        sprayT=RandF(.15f,.3f); float a2=RandF(0,2*PI);
-                        Bullet b{}; b.pos=g.boss.pos; b.vel={cosf(a2)*220.f, sinf(a2)*220.f};
-                        b.life=160; b.active=true; b.col=VP_RED; b.glowR=4;
-                        BossBulletPoolPush(g.bossBullets, g.bossBulletRover, b);
-                    }
-                }
-                g.boss.angle+=enraged?.08f:.03f; g.boss.angle2-=enraged?.13f:.05f;
-                if(d2 < (g.boss.radius+PLAYER_RADIUS)*(g.boss.radius+PLAYER_RADIUS)){ PlayerHit(g); if(g.lives<=0)g.state=GAMEOVER; }
+                // Boss body contact (dist already uses toroidal delta)
+                if(dist<g.boss.radius+PLAYER_RADIUS){ PlayerHit(g); if(g.lives<=0)g.state=GAMEOVER; }
             }
 
             // ── BOSS BULLETS update + player collision ──
@@ -3069,89 +2864,183 @@ int main(){
                 float px=b.pos.x-g.playerPos.x, py=b.pos.y-g.playerPos.y;
                 if(px*px+py*py<576.f){ b.active=false; PlayerHit(g); if(g.lives<=0)g.state=GAMEOVER; }
             }
+            // (inactive boss bullets stay stale; always fully re-initialised on reuse)
 
             // ── PARTICLES ──
-            for(auto& p:g.particles){
-                if(!p.active) continue; p.prevPos=p.pos; p.pos.x+=p.vel.x*dt; p.pos.y+=p.vel.y*dt;
-                p.vel.x*=.96f; p.vel.y*=.96f; p.life-=dt/p.maxLife*.85f; p.angle+=p.angVel*dt;
-                if(p.life<=0) p.active=false;
-            }
+            for(auto& p:g.particles){p.prevPos=p.pos;p.pos.x+=p.vel.x*dt;p.pos.y+=p.vel.y*dt;p.vel.x*=.96f;p.vel.y*=.96f;p.life-=dt/p.maxLife*.85f;p.angle+=p.angVel*dt;}
+            g.particles.erase(std::remove_if(g.particles.begin(),g.particles.end(),[](Particle& p){return p.life<=0;}),g.particles.end());
 
             // ── PICKUPS ──
             float magR=g.ucache.magnet?160:45;
+            float softR=g.ucache.magnet?320:120; // soft attract radius — gold slowly drifts toward player
             for(auto& pk:g.pickups){
                 if(!pk.active)continue; pk.pos.y+=pk.vy*dt; pk.spin+=dt*2; pk.life--;
-                float dx=pk.pos.x-g.playerPos.x,dy=pk.pos.y-g.playerPos.y,dist2=dx*dx+dy*dy;
-                if(dist2<magR*magR){ float dist=sqrtf(dist2); pk.pos.x+=(g.playerPos.x-pk.pos.x)*9*dt;pk.pos.y+=(g.playerPos.y-pk.pos.y)*9*dt;}
-                if(dist2<256.f){g.score+=pk.value;if(g.score>g.highScore)g.highScore=g.score;SpawnPopup(g,pk.pos,"+"+IStr(pk.value),VP_YELLOW,10);pk.active=false;}
+                float dx=pk.pos.x-g.playerPos.x,dy=pk.pos.y-g.playerPos.y,dist=sqrtf(dx*dx+dy*dy);
+                if(dist<magR){
+                    // hard magnet snap
+                    pk.pos.x+=(g.playerPos.x-pk.pos.x)*9*dt;
+                    pk.pos.y+=(g.playerPos.y-pk.pos.y)*9*dt;
+                } else if(dist<softR && dist>0.1f){
+                    // soft drift: ramps from 0 at softR edge to ~1.8 speed at magR boundary
+                    float t01 = 1.f - (dist-magR)/(softR-magR); // 0 far, 1 near
+                    float strength = t01*t01 * 1.8f; // quadratic ease-in
+                    float nx=dx/dist, ny=dy/dist;
+                    pk.pos.x -= nx*strength*dt*60.f;
+                    pk.pos.y -= ny*strength*dt*60.f;
+                }
+                if(dist<16){g.score+=pk.value;if(g.score>g.highScore)g.highScore=g.score;SpawnPopup(g,pk.pos,"+"+IStr(pk.value),VP_YELLOW,10);pk.active=false;}
                 if(pk.life<=0)pk.active=false;
             }
-            for(auto& pt:g.popups){ if(!pt.active)continue; pt.life-=dt; if(pt.life<=0) pt.active=false; }
+            g.pickups.erase(std::remove_if(g.pickups.begin(),g.pickups.end(),[](Pickup& p){return !p.active;}),g.pickups.end());
+            for(auto& pt:g.popups)pt.life-=dt;
+            g.popups.erase(std::remove_if(g.popups.begin(),g.popups.end(),[](PopupText& p){return p.life<=0;}),g.popups.end());
         }
 
         // ══════ DRAW ══════
         BeginTextureMode(rt);
+        // ── Per-wave sky base color — each level has a UNIQUE, saturated sky ──
+        // These are deep, rich background colors that make every wave unmistakeable.
         {
             static const Color waveSky[28]={
-                {18,  2, 28,255},  {30,  5,  8,255},  { 2, 10, 45,255},  { 0,  5, 22,255},  { 4, 22,  2,255},  {12, 18,  1,255},  {16,  0, 40,255},  { 5,  1, 18,255},  { 0, 20, 22,255},  {28, 18,  0,255},  {35, 12,  0,255},  {30, 24,  0,255},  {30,  0, 20,255},  { 1,  0,  3,255},  {40,  4,  0,255},  {40, 32,  8,255},  { 6,  6, 14,255},  {14,  5,  1,255},  { 2,  0,  8,255},  { 0,  0,  1,255},  {20,  0, 14,255},  {12,  0, 30,255},  { 3,  2,  8,255},  {25, 10,  0,255},  { 1,  0,  4,255},  { 0,  0,  0,255},  {10,  0, 18,255},  { 0,  0,  0,255},
+                {18,  2, 28,255},  // 0  CRIMSON NEBULA    — deep blood-magenta
+                {30,  5,  8,255},  // 1  EMBER FIELDS      — furnace black-red
+                { 2, 10, 45,255},  // 2  OCEAN WORLD       — abyssal dark blue
+                { 0,  5, 22,255},  // 3  ABYSSAL TRENCH    — crushing deep black-blue
+                { 4, 22,  2,255},  // 4  TOXIC SWAMP       — poisonous black-green
+                {12, 18,  1,255},  // 5  SPORE WASTES      — sickly olive dark
+                {16,  0, 40,255},  // 6  VOID RIFT         — violent deep ultraviolet
+                { 5,  1, 18,255},  // 7  PHANTOM GATE      — near-void indigo black
+                { 0, 20, 22,255},  // 8  CRYSTAL CAVERNS   — dark teal ice
+                {28, 18,  0,255},  // 9  RESONANCE CORE    — smoldering amber dark
+                {35, 12,  0,255},  // 10 STELLAR FORGE     — deep forge orange-black
+                {30, 24,  0,255},  // 11 SHARD TEMPEST     — hot gold dark
+                {30,  0, 20,255},  // 12 QUANTUM DEPTHS    — deep magenta-void
+                { 1,  0,  3,255},  // 13 EVENT HORIZON     — ABSOLUTE BLACK — near nothing
+                {40,  4,  0,255},  // 14 SOLAR INFERNO     — scorched red-black
+                {40, 32,  8,255},  // 15 CORONA BREACH     — white-gold burn haze
+                { 6,  6, 14,255},  // 16 OBSIDIAN WASTES   — cold charcoal dark
+                {14,  5,  1,255},  // 17 ASHEN CITADEL     — smoldering ash black
+                { 2,  0,  8,255},  // 18 THE VOID          — deeper void
+                { 0,  0,  1,255},  // 19 VOID SINGULARITY  — ABSOLUTE VOID
+                {20,  0, 14,255},  // 20 CORONA BREACH+    — dark carnage
+                {12,  0, 30,255},  // 21 OBSIDIAN WASTES+  — violet darkness
+                { 3,  2,  8,255},  // 22 PHANTOM DEPTHS    — obsidian void
+                {25, 10,  0,255},  // 23 ASHEN CITADEL+    — ember siege
+                { 1,  0,  4,255},  // 24 THE VOID+         — deeper still
+                { 0,  0,  0,255},  // 25 VOID SINGULARITY+ — total darkness
+                {10,  0, 18,255},  // 26 DYING VIOLET      — last flicker
+                { 0,  0,  0,255},  // 27 ABSOLUTE VOID     — nothing
             };
             int wi=(g.state==PLAYING||g.state==PAUSED)?std::min(g.wave,27):0;
             ClearBackground(waveSky[wi]);
         }
-        DrawNebulas(g,t); DrawStars(g,t); DrawShootingStars(g); DrawAurora(t, g.wave); DrawDust(); DrawHyper(); DrawLightning();
+        DrawNebulas(g,t);
+        DrawStars(g,t);
+        DrawShootingStars(g);
+        DrawAurora(t, g.wave);
+        DrawDust();
+        DrawHyper();
+        DrawLightning();
 
         if(g.state==TITLE)                                               { DrawTitle(g,gUI,t,msc,clicked); }
         else if(g.state==SHOP)                                           { DrawShop(g,t); }
         else if(g.state==PAUSED&&(gPrevState==TITLE||gPrevState==SHOP))  { (gPrevState==SHOP?DrawShop(g,t):DrawTitle(g,gUI,t,msc,clicked)); DrawPause(g,gUI,t,msc,clicked); }
         else if(g.state==GAMEOVER) DrawGameOver(g,t);
         else if(g.state==PLAYING||g.state==PAUSED){
+            // Easter eggs rendered in background — behind the grid tiles, with planets
             DrawEasterEggs(g,t, 1.0f);
-            DrawWorldGrid(g,t);
+            { static int _gf=0; _gf++; if(_gf%2==0) DrawWorldGrid(g,t); }
+            // Strong per-wave color identity wash — makes every level feel DIFFERENT
             {
                 static const Color waveWash[28]={
-                    {180, 10, 80,255},  {220, 40,  5,255},  {  5, 60,200,255},  {  0, 80,120,255},  { 50,180, 10,255},  { 90,120,  5,255},  {100, 10,200,255},  { 60, 20,140,255},  {  5,180,170,255},  {200,140, 10,255},  {220, 90,  5,255},  {240,200, 10,255},  {180,  5,100,255},  {100, 20,180,255},  {220, 30,  0,255},  {255,220, 80,255},  { 40, 80,140,255},  {140, 70, 10,255},  { 80, 20,200,255},  {180,100,255,255},  {200,  5,120,255},  {100, 30,220,255},  { 20, 10, 55,255},  {160, 80,  5,255},  { 40,  5,100,255},  { 10,  2, 40,255},  { 60,  0,100,255},  { 5,   0, 10,255},
+                    {180, 10, 80,255},  // 0  crimson — hot magenta bloom
+                    {220, 40,  5,255},  // 1  ember — deep orange fire
+                    {  5, 60,200,255},  // 2  ocean — saturated blue
+                    {  0, 80,120,255},  // 3  abyssal — bioluminescent teal
+                    { 50,180, 10,255},  // 4  toxic — acid green
+                    { 90,120,  5,255},  // 5  spore — sickly olive
+                    {100, 10,200,255},  // 6  void rift — deep violet
+                    { 60, 20,140,255},  // 7  phantom — dark indigo
+                    {  5,180,170,255},  // 8  crystal — teal ice
+                    {200,140, 10,255},  // 9  resonance — amber gold
+                    {220, 90,  5,255},  // 10 forge — orange forge
+                    {240,200, 10,255},  // 11 shard — hot gold
+                    {180,  5,100,255},  // 12 quantum — deep magenta
+                    {100, 20,180,255},  // 13 event horizon — void violet (barely visible)
+                    {220, 30,  0,255},  // 14 inferno — blazing red
+                    {255,220, 80,255},  // 15 corona — white gold eruption
+                    { 40, 80,140,255},  // 16 obsidian — cold steel
+                    {140, 70, 10,255},  // 17 ashen — smoldering ash
+                    { 80, 20,200,255},  // 18 the void — deep void violet
+                    {180,100,255,255},  // 19 singularity — blinding void aurora
+                    {200,  5,120,255},  // 20 carnage pink
+                    {100, 30,220,255},  // 21 violet surge
+                    { 20, 10, 55,255},  // 22 obsidian void
+                    {160, 80,  5,255},  // 23 ember siege
+                    { 40,  5,100,255},  // 24 deep void
+                    { 10,  2, 40,255},  // 25 singularity+
+                    { 60,  0,100,255},  // 26 dying violet
+                    { 5,   0, 10,255},  // 27 absolute void
                 };
                 int wi=std::min(g.wave,27);
                 DrawRectangle(0,0,SCREEN_W,SCREEN_H,ColorAlpha(waveWash[wi],0.055f));
             }
             // Particles
             for(auto& p:g.particles){
-                if(!p.active) continue;
-                Vector2 sp=W2S(g,p.pos); p.renderPos = sp;
-                if(!OnScreen(sp,20))continue;
+                Vector2 sp=W2S(g,p.pos); if(!OnScreen(sp,20))continue;
                 if(p.isRing){
-                    float prog=1.f-p.life/p.maxLife; float rr=p.ringMaxR*prog;
+                    float prog=1.f-p.life/p.maxLife;
+                    float rr=p.ringMaxR*prog;
+                    // Clean single ring — no multi-ring bloat
                     DrawCircleLinesV(sp,rr,   ColorAlpha(p.color,p.life*.90f));
                     DrawCircleLinesV(sp,rr+1, ColorAlpha(p.color,p.life*.20f));
                 }
                 else if(p.isShard){
-                    float halfL=p.stretch*p.life*0.5f, halfW=p.radius*p.life*0.30f;
+                    float halfL=p.stretch*p.life*0.5f;
+                    float halfW=p.radius*p.life*0.30f;
                     float ca=cosf(p.angle),sa=sinf(p.angle);
-                    Vector2 A={sp.x+ca*halfL-sa*halfW, sp.y+sa*halfL+ca*halfW}, B={sp.x-ca*halfL-sa*halfW, sp.y-sa*halfL+ca*halfW};
-                    Vector2 C={sp.x-ca*halfL+sa*halfW, sp.y-sa*halfL-ca*halfW}, D={sp.x+ca*halfL+sa*halfW, sp.y+sa*halfL-ca*halfW};
-                    DrawTriangle(A,B,D,ColorAlpha(p.color,p.life*.80f)); DrawTriangle(B,C,D,ColorAlpha(p.color,p.life*.80f));
+                    Vector2 A={sp.x+ca*halfL-sa*halfW, sp.y+sa*halfL+ca*halfW};
+                    Vector2 B={sp.x-ca*halfL-sa*halfW, sp.y-sa*halfL+ca*halfW};
+                    Vector2 C={sp.x-ca*halfL+sa*halfW, sp.y-sa*halfL-ca*halfW};
+                    Vector2 D={sp.x+ca*halfL+sa*halfW, sp.y+sa*halfL-ca*halfW};
+                    DrawTriangle(A,B,D,ColorAlpha(p.color,p.life*.80f));
+                    DrawTriangle(B,C,D,ColorAlpha(p.color,p.life*.80f));
                 }
                 else if(p.isSpark){
-                    Vector2 sp2=W2S(g,p.prevPos); DrawNeonLine(sp2,sp,p.color,1.4f,p.life*.85f);
-                    if(p.life>0.55f) DrawCircleV(sp,1.5f,ColorAlpha(VP_WHITE,p.life*.70f));
+                    // Sharp motion line — single pass
+                    Vector2 sp2=W2S(g,p.prevPos);
+                    DrawNeonLine(sp2,sp,p.color,1.4f,p.life*.85f);
+                    if(p.life>0.55f)
+                        DrawCircleV(sp,1.5f,ColorAlpha(VP_WHITE,p.life*.70f));
                 }
                 else {
                     float pr=p.radius*(p.life/p.maxLife);
-                    DrawCircleV(sp,pr, ColorAlpha(p.color,p.life*.75f)); DrawCircleV(sp,pr*.45f, ColorAlpha(VP_WHITE,p.life*.55f));
+                    DrawCircleV(sp,pr,      ColorAlpha(p.color,p.life*.75f));
+                    DrawCircleV(sp,pr*.45f, ColorAlpha(VP_WHITE,p.life*.55f));
                 }
             }
-            for(auto& pk:g.pickups){ if(!pk.active)continue; Vector2 sp=W2S(g,pk.pos); pk.renderPos=sp; if(OnScreen(sp,30))DrawPickup(pk,sp,t);}
-            for(auto& e:g.enemies){ if(!e.active)continue; if(OnScreen(e.renderPos,50))DrawEnemy(e,e.renderPos,t); }
+            for(auto& pk:g.pickups){if(!pk.active)continue;Vector2 sp=W2S(g,pk.pos);if(OnScreen(sp,30))DrawPickup(pk,sp,t);}
+            for(auto& e:g.enemies){
+                if(!e.active)continue;
+                Vector2 sp=W2S(g,e.pos);
+                if(!OnScreen(sp,50))continue;
+                DrawEnemy(e,sp,t);
+            }
             if(g.boss.active){Vector2 sp=W2S(g,g.boss.pos);DrawBoss(g.boss,sp,t);}
-            for(auto& b:g.bullets){ if(!b.active)continue; if(OnScreen(b.renderPos,15))DrawBullet(b,b.renderPos,t);}
+            for(auto& b:g.bullets){if(!b.active)continue;Vector2 sp=W2S(g,b.pos);if(OnScreen(sp,15))DrawBullet(b,sp,t);}
+            // Boss bullets — draw as glowing hostile orbs
             for(auto& b:g.bossBullets){
                 if(!b.active)continue;
                 Vector2 sp=W2S(g,b.pos); if(!OnScreen(sp,20))continue;
                 float pulse=.6f+.4f*sinf(t*12+b.pos.x*.02f);
-                DrawCircleV(sp,b.glowR+4,ColorAlpha(b.col,.12f)); DrawCircleV(sp,b.glowR,ColorAlpha(b.col,.88f*pulse));
+                // Outer haze (1 ring only) + core
+                DrawCircleV(sp,b.glowR+4,ColorAlpha(b.col,.12f));
+                DrawCircleV(sp,b.glowR,ColorAlpha(b.col,.88f*pulse));
+                // 4 spikes
                 for(int ri=0;ri<4;ri++){
                     float ra=t*4.f+ri*(3.14159f*.5f)+b.pos.x*.01f;
-                    Vector2 r1={sp.x+cosf(ra)*(b.glowR+1),sp.y+sinf(ra)*(b.glowR+1)}, r2={sp.x+cosf(ra)*(b.glowR+5),sp.y+sinf(ra)*(b.glowR+5)};
+                    Vector2 r1={sp.x+cosf(ra)*(b.glowR+1),sp.y+sinf(ra)*(b.glowR+1)};
+                    Vector2 r2={sp.x+cosf(ra)*(b.glowR+5),sp.y+sinf(ra)*(b.glowR+5)};
                     DrawLineEx(r1,r2,0.9f,ColorAlpha(b.col,pulse*0.5f));
                 }
                 DrawCircleV(sp,b.glowR*.45f,ColorAlpha(VP_WHITE,.9f));
