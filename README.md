@@ -20,7 +20,7 @@ The codebase is modular, split across several files for easier management:
 
 ## Building
 Requires `raylib` installed.
-
+·
 ### Using the script:
 ```bash
 ./build.sh
