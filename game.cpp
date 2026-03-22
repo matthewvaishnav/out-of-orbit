@@ -394,6 +394,14 @@ void InitGame(Game& g){
     g.playerPos={WORLD_W/2.f,WORLD_H/2.f};
     g.cameraPos={g.playerPos.x-SCREEN_W/2.f,g.playerPos.y-SCREEN_H/2.f};
     g.prayer=PRAYER_FIRE;
+    // ── Skill runtime state reset ──
+    g.cloakActive=false; g.cloakTimer=0.f;
+    g.regenTimer=0.f;
+    g.barrierCooldown=0.f;
+    g.overloadMult=1.f; g.overloadKills=0;
+    g.sniperReady=true;
+    g.momentumDmgMult=1.f;
+    g.ghostOrbActive=false; g.ghostOrbAngle=0.f; g.ghostOrbTimer=0.f; g.spiritChainKills=0;
     // ── LEVELING SYSTEM — milestone-gated ship tier ──────────────────────────
     // Tier ONLY increases when BOTH conditions are met:
     //   1. Player has completed enough total runs for this tier bracket

@@ -119,8 +119,11 @@ struct Bullet {
     bool    ricochet    = false;
     float   critChance  = 0.f;
     float   critMulti   = 2.f;
-    int     bounceCount = 0;
-    int     shipType    = 0;   // 0=Interceptor 1=Brawler 2=Phantom 3=Titan
+    int     bounceCount   = 0;
+    int     shipType      = 0;   // 0=Interceptor 1=Brawler 2=Phantom 3=Titan
+    // ── Spirit chain ──
+    int     chainJumps    = 0;   // remaining hops
+    float   chainDmgMult  = 1.f; // grows 1.5x per hop
 };
 
 struct Particle {
@@ -147,6 +150,12 @@ struct Enemy {
     Color    col;
     float    shootTimer = 0.f;
     int      variant    = 0;
+    // ── Prayer status effects ──
+    float    burnTimer   = 0.f;  // FIRE: remaining burn duration
+    int      burnStacks  = 0;    // FIRE: 1-5 stacks, 3 dmg/sec each
+    float    frozenTimer = 0.f;  // ICE: remaining freeze duration
+    float    frozenMult  = 1.f;  // ICE: velocity multiplier (0.35 when frozen)
+    bool     frozenAmp   = false;// ICE: true = next hit does 2x (shatter)
 };
 
 struct Boss {
@@ -257,6 +266,22 @@ struct Game {
     float resonanceTimer=0;
     float chiGauge=0,chiRingTimer=0,heatVentTimer=0;
 
+    // ── Spirit ghost orb ──
+    bool  ghostOrbActive   = false;
+    float ghostOrbAngle    = 0.f;
+    float ghostOrbTimer    = 0.f;
+    int   spiritChainKills = 0;
+
+    // ── Skill runtime state ──
+    bool  cloakActive      = false;  // Phantom: invisibility active
+    float cloakTimer       = 0.f;
+    float regenTimer       = 0.f;   // Brawler: regen tick accumulator
+    float barrierCooldown  = 0.f;   // Titan: auto-shield cooldown
+    float overloadMult     = 1.f;   // Titan/Brawler: kill-streak damage
+    int   overloadKills    = 0;     // kills since last reset
+    bool  sniperReady      = true;  // Phantom: next bullet is the first
+    float momentumDmgMult  = 1.f;  // Interceptor: speed->dmg
+
     // ── Bullet pools — fixed-size, active-flag, no mid-frame allocation ──
     std::array<Bullet, BULLET_POOL_SIZE>      bullets;
     std::array<Bullet, BOSS_BULLET_POOL_SIZE> bossBullets;
@@ -282,6 +307,19 @@ struct Game {
         bool cooldown=false,crit=false,magnet=false,vampire=false,bigbang=false;
         bool goldmag=false,shield=false,overclock=false;
         int  cooldownLv=0, overclockLv=0;
+        // ── Ship skills ──
+        bool sk_dash=false;      // Interceptor: shift-dash
+        bool sk_ricochet=false;  // Interceptor: bullet bounce
+        bool sk_momentum=false;  // Interceptor: speed->damage
+        bool sk_regen=false;     // Brawler: passive HP regen
+        bool sk_shockwave=false; // Brawler: ram AoE
+        bool sk_charge=false;    // Brawler: kill streak damage
+        bool sk_cloak=false;     // Phantom: invisiblity on hit
+        bool sk_sniper=false;    // Phantom: first bullet 4x dmg
+        bool sk_phase=false;     // Phantom: bullets pierce 3
+        bool sk_barrier=false;   // Titan: auto shield every 8s
+        bool sk_gravity=false;   // Titan: pull enemies
+        bool sk_overload=false;  // Titan: kill streak damage
     } ucache;
 
     // Rover indices for O(1) amortised bullet pool insertion
@@ -537,3 +575,7 @@ void ApplySkillsToWeapon(const std::vector<Skill>& skills,PlayerWeaponState& w,S
 int  CalculateBulletDamage(const Bullet& b,const PlayerWeaponState& w);
 float GetPlayerHealthMultiplier();
 void Enemies_SetUI(UIState* ui);
+
+// ── Prayer effects (prayer_effects.cpp) ──
+void UpdatePrayerEffects(Game& g, float dt);
+void DrawGhostOrb(Game& g, float t);

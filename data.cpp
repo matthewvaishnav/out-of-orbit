@@ -208,4 +208,17 @@ void RefreshUpgradeCache(Game& g){
     c.overclock  = HasUpgrade(g,"overclock");
     c.cooldownLv = OwnedLevel(g,"cooldown");
     c.overclockLv= OwnedLevel(g,"overclock");
+    // ── Ship skills ──
+    c.sk_dash      = HasUpgrade(g,"sk0_dash");
+    c.sk_ricochet  = HasUpgrade(g,"sk0_ricochet");
+    c.sk_momentum  = HasUpgrade(g,"sk0_momentum");
+    c.sk_regen     = HasUpgrade(g,"sk1_regen");
+    c.sk_shockwave = HasUpgrade(g,"sk1_shockwave");
+    c.sk_charge    = HasUpgrade(g,"sk1_charge");
+    c.sk_cloak     = HasUpgrade(g,"sk2_cloak");
+    c.sk_sniper    = HasUpgrade(g,"sk2_sniper");
+    c.sk_phase     = HasUpgrade(g,"sk2_phase");
+    c.sk_barrier   = HasUpgrade(g,"sk3_barrier");
+    c.sk_gravity   = HasUpgrade(g,"sk3_gravity");
+    c.sk_overload  = HasUpgrade(g,"sk3_overload");
 }
