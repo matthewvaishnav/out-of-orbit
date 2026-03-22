@@ -87,9 +87,10 @@ constexpr float PLAYER_SPEED  = 236.f;
 constexpr float PLAYER_RADIUS = 13.f;
 constexpr float PLAYER_RADIUS_L2 = 18.f;
 
-// Bullet pool sizes -- pre-allocated, no heap fragmentation mid-frame`nconstexpr int BULLET_POOL_SIZE      = 1024;`nconstexpr int BOSS_BULLET_POOL_SIZE = 512;`n`n// Particle system G�� increased from 400 for better explosion density`nconstexpr int PARTICLE_LIMIT = 800;
+// Bullet pool sizes — pre-allocated, no heap fragmentation mid-frame
 constexpr int BULLET_POOL_SIZE      = 1024;
 constexpr int BOSS_BULLET_POOL_SIZE = 512;
+constexpr int PARTICLE_LIMIT        = 800;
 
 // ══════════════════════════════════════════════════════════════
 //  ENUMS
@@ -272,6 +273,16 @@ struct Game {
     float ghostOrbTimer    = 0.f;
     int   spiritChainKills = 0;
 
+    // ── Skill runtime state ──
+    bool  cloakActive      = false;  // Phantom: invisibility active
+    float cloakTimer       = 0.f;
+    float regenTimer       = 0.f;   // Brawler: regen tick accumulator
+    float barrierCooldown  = 0.f;   // Titan: auto-shield cooldown
+    float overloadMult     = 1.f;   // Titan/Brawler: kill-streak damage
+    int   overloadKills    = 0;     // kills since last reset
+    bool  sniperReady      = true;  // Phantom: next bullet is the first
+    float momentumDmgMult  = 1.f;  // Interceptor: speed->dmg
+
     // ── Bullet pools — fixed-size, active-flag, no mid-frame allocation ──
     std::array<Bullet, BULLET_POOL_SIZE>      bullets;
     std::array<Bullet, BOSS_BULLET_POOL_SIZE> bossBullets;
@@ -297,6 +308,19 @@ struct Game {
         bool cooldown=false,crit=false,magnet=false,vampire=false,bigbang=false;
         bool goldmag=false,shield=false,overclock=false;
         int  cooldownLv=0, overclockLv=0;
+        // ── Ship skills ──
+        bool sk_dash=false;      // Interceptor: shift-dash
+        bool sk_ricochet=false;  // Interceptor: bullet bounce
+        bool sk_momentum=false;  // Interceptor: speed->damage
+        bool sk_regen=false;     // Brawler: passive HP regen
+        bool sk_shockwave=false; // Brawler: ram AoE
+        bool sk_charge=false;    // Brawler: kill streak damage
+        bool sk_cloak=false;     // Phantom: invisiblity on hit
+        bool sk_sniper=false;    // Phantom: first bullet 4x dmg
+        bool sk_phase=false;     // Phantom: bullets pierce 3
+        bool sk_barrier=false;   // Titan: auto shield every 8s
+        bool sk_gravity=false;   // Titan: pull enemies
+        bool sk_overload=false;  // Titan: kill streak damage
     } ucache;
 
     // Rover indices for O(1) amortised bullet pool insertion
