@@ -87,7 +87,7 @@ constexpr float PLAYER_SPEED  = 236.f;
 constexpr float PLAYER_RADIUS = 13.f;
 constexpr float PLAYER_RADIUS_L2 = 18.f;
 
-// Bullet pool sizes â€” pre-allocated, no heap fragmentation mid-frame
+// Bullet pool sizes -- pre-allocated, no heap fragmentation mid-frame`nconstexpr int BULLET_POOL_SIZE      = 1024;`nconstexpr int BOSS_BULLET_POOL_SIZE = 512;`n`n// Particle system GÇö increased from 400 for better explosion density`nconstexpr int PARTICLE_LIMIT = 800;
 constexpr int BULLET_POOL_SIZE      = 1024;
 constexpr int BOSS_BULLET_POOL_SIZE = 512;
 
