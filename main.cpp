@@ -157,132 +157,112 @@ void Shoot(Game& g,Vector2 mw){
         SpawnParticles(g,b.pos,VP_MINT,4,90,true); return;
     }
 
-    switch(g.selectedShip){
+    // ── Prayer defines identity; ship modifies it ───────────────
+    // FIRE  : slow heavy slugs — burn stacks on hit, chain ignition on kill
+    // ICE   : fast precise darts — freeze on hit, shatter bonus + ice shards on kill
+    // SPIRIT: weak solo but chains to 3 enemies (+50% dmg/hop), ghost orb after 8 chain kills
 
-    case 0:{
-        float offset=4.5f;
-        int   nPairs= tri?2:1;
-        float praySpd   = (g.prayer==PRAYER_ICE)?520.f:(g.prayer==PRAYER_FIRE)?155.f:340.f;
-        int   prayLife  = (g.prayer==PRAYER_ICE)?52:(g.prayer==PRAYER_FIRE)?88:75;
-        int   prayPtype = (g.prayer==PRAYER_FIRE)?0:(g.prayer==PRAYER_ICE)?1:2;
-        Color prayCol   = (g.prayer==PRAYER_FIRE)?VP_ORANGE:(g.prayer==PRAYER_ICE)?VP_CYAN:VP_PURPLE;
-        float prayGlow  = (g.prayer==PRAYER_FIRE)?8.f:(g.prayer==PRAYER_ICE)?4.5f:5.f;
-        int   prayDmg   = (g.prayer==PRAYER_FIRE)?3:2;
-        bool  prayHom   = (g.prayer==PRAYER_SPIRIT);
-        static int interceptorBarrel=0;
-        float barrelSign=(interceptorBarrel%2==0)?1.f:-1.f;
-        interceptorBarrel++;
-        for(int pi=0;pi<nPairs;pi++){
-            float triAng = tri ? (pi==0?-.18f:.18f) : 0.f;
-            auto bL=MkBullet( px2*offset*barrelSign,  py2*offset*barrelSign,
-                               triAng, praySpd, prayLife, prayCol, prayGlow, prayPtype, prayDmg, prayHom);
-            auto bR=MkBullet(-px2*offset*barrelSign, -py2*offset*barrelSign,
-                               triAng+RandF(-.04f,.04f), praySpd*0.98f, prayLife, prayCol, prayGlow*0.8f, prayPtype, prayDmg, prayHom);
-            BulletPoolPush(g.bullets,g.bulletRover,bL);
-            BulletPoolPush(g.bullets,g.bulletRover,bR);
-        }
-        if(sct){
-            for(int si=0;si<2;si++){
-                auto bs=MkBullet(px2*8.f*(si?1.f:-1.f),py2*8.f*(si?1.f:-1.f),
-                                 RandF(-.38f,.38f),praySpd*0.75f,prayLife-10,prayCol,prayGlow*.6f,prayPtype,1);
-                BulletPoolPush(g.bullets,g.bulletRover,bs);
-            }
-        }
-        SpawnParticles(g,{g.playerPos.x+nx*18,g.playerPos.y+ny*18},prayCol,3,70,true);
-        break;}
+    float baseSpd, baseGlow;
+    int   baseLife, baseDmg, basePtype;
+    Color baseCol;
+    bool  baseHom   = false;
+    int   chainHops = 0;
 
-    case 1:{
-        static int brawlerBarrel=0;
-        float side=(brawlerBarrel%2==0)?1.f:-1.f;
-        brawlerBarrel++;
-        float barrelOff=7.f;
-        float praySpd  = (g.prayer==PRAYER_ICE)?310.f:(g.prayer==PRAYER_FIRE)?105.f:160.f;
-        int   prayLife = (g.prayer==PRAYER_ICE)?65:(g.prayer==PRAYER_FIRE)?100:95;
-        int   prayPtype= (g.prayer==PRAYER_FIRE)?0:(g.prayer==PRAYER_ICE)?1:2;
-        Color brawlerSpirit = {255,140,60,255};
-        Color prayCol  = (g.prayer==PRAYER_FIRE)?VP_RED:(g.prayer==PRAYER_ICE)?VP_CYAN:brawlerSpirit;
-        float prayGlow = (g.prayer==PRAYER_FIRE)?14.f:(g.prayer==PRAYER_ICE)?7.f:12.f;
-        int   prayDmg  = (g.prayer==PRAYER_FIRE)?5:(g.prayer==PRAYER_ICE)?4:4;
-        bool  prayHom  = (g.prayer==PRAYER_SPIRIT);
-        auto bMain=MkBullet(px2*barrelOff*side,py2*barrelOff*side,
-                            0,praySpd,prayLife,prayCol,prayGlow,prayPtype,prayDmg,prayHom);
-        BulletPoolPush(g.bullets,g.bulletRover,bMain);
-        if(tri){
-            auto b2=MkBullet(-px2*barrelOff*side,-py2*barrelOff*side,
-                             RandF(-.06f,.06f),praySpd,prayLife,prayCol,prayGlow*.85f,prayPtype,prayDmg,prayHom);
-            BulletPoolPush(g.bullets,g.bulletRover,b2);
-        }
-        if(sct){
-            for(int si=0;si<2;si++){
-                auto bs=MkBullet(px2*12.f*(si?1:-1),py2*12.f*(si?1:-1),
-                                 RandF(-.45f,.45f),praySpd*0.7f,prayLife,prayCol,prayGlow*.7f,prayPtype,2);
-                BulletPoolPush(g.bullets,g.bulletRover,bs);
-            }
-        }
-        SpawnParticles(g,{g.playerPos.x+nx*18+px2*barrelOff*side,
-                          g.playerPos.y+ny*18+py2*barrelOff*side},prayCol,7,100,true);
-        g.screenShake=std::min(g.screenShake+0.04f,0.35f);
-        break;}
-
-    case 2:{
-        float praySpd  = (g.prayer==PRAYER_ICE)?560.f:(g.prayer==PRAYER_FIRE)?145.f:260.f;
-        int   prayLife = (g.prayer==PRAYER_ICE)?60:(g.prayer==PRAYER_FIRE)?92:100;
-        int   prayPtype= (g.prayer==PRAYER_FIRE)?0:(g.prayer==PRAYER_ICE)?1:2;
-        Color prayCol  = (g.prayer==PRAYER_FIRE)?VP_HOTPINK:(g.prayer==PRAYER_ICE)?VP_LAVENDER:VP_PURPLE;
-        float prayGlow = (g.prayer==PRAYER_FIRE)?7.f:(g.prayer==PRAYER_ICE)?4.f:5.5f;
-        int   prayDmg  = (g.prayer==PRAYER_FIRE)?2:(g.prayer==PRAYER_ICE)?3:2;
-        bool  prayHom  = (g.prayer==PRAYER_SPIRIT);
-        float wingOff=14.f;
-        int nShots = tri ? 3 : 2;
-        for(int wi=0;wi<nShots;wi++){
-            float wSide = (nShots==2) ? (wi==0?1.f:-1.f) :
-                          (wi==0?1.f:wi==1?-1.f:0.f);
-            float ao    = (nShots==3&&wi==2)?0.f : wSide*-.05f;
-            auto b=MkBullet(px2*wingOff*wSide,py2*wingOff*wSide,
-                            ao+RandF(-.02f,.02f),praySpd,prayLife,prayCol,prayGlow,prayPtype,prayDmg,prayHom);
-            BulletPoolPush(g.bullets,g.bulletRover,b);
-        }
-        if(sct){
-            for(int si=0;si<3;si++){
-                auto bs=MkBullet(px2*RandF(-8.f,8.f),py2*RandF(-8.f,8.f),
-                                 RandF(-.40f,.40f),praySpd*0.85f,prayLife,prayCol,prayGlow*.55f,prayPtype,1);
-                BulletPoolPush(g.bullets,g.bulletRover,bs);
-            }
-        }
-        SpawnParticles(g,{g.playerPos.x+nx*18,g.playerPos.y+ny*18},prayCol,2,50,true);
-        break;}
-
-    case 3:{
-        Color titanFire = {255,120,40,255}; Color titanIce = {80,220,255,255};
-        float praySpd  = (g.prayer==PRAYER_ICE)?220.f:(g.prayer==PRAYER_FIRE)?80.f:130.f;
-        int   prayLife = (g.prayer==PRAYER_ICE)?75:(g.prayer==PRAYER_FIRE)?105:110;
-        int   prayPtype= (g.prayer==PRAYER_FIRE)?0:(g.prayer==PRAYER_ICE)?1:2;
-        Color prayCol  = (g.prayer==PRAYER_FIRE)?titanFire:(g.prayer==PRAYER_ICE)?titanIce:VP_MINT;
-        float prayGlow = (g.prayer==PRAYER_FIRE)?16.f:(g.prayer==PRAYER_ICE)?11.f:14.f;
-        int   prayDmg  = (g.prayer==PRAYER_FIRE)?7:(g.prayer==PRAYER_ICE)?5:6;
-        bool  prayHom  = (g.prayer==PRAYER_SPIRIT);
-        auto bMain=MkBullet(nx*4,ny*4,0,praySpd,prayLife,prayCol,prayGlow,prayPtype,prayDmg,prayHom);
-        BulletPoolPush(g.bullets,g.bulletRover,bMain);
-        if(tri){
-            for(int fi=0;fi<2;fi++){
-                float fSide=(fi==0?1.f:-1.f);
-                auto bf=MkBullet(px2*9.f*fSide,py2*9.f*fSide,
-                                 fSide*.10f,praySpd*.88f,prayLife,prayCol,prayGlow*.75f,prayPtype,prayDmg-1,prayHom);
-                BulletPoolPush(g.bullets,g.bulletRover,bf);
-            }
-        }
-        if(sct){
-            for(int si=0;si<3;si++){
-                auto bs=MkBullet(0,0,RandF(-.55f,.55f),praySpd*0.65f,prayLife,prayCol,prayGlow*.65f,prayPtype,3);
-                BulletPoolPush(g.bullets,g.bulletRover,bs);
-            }
-        }
-        SpawnRing(g,{g.playerPos.x+nx*20,g.playerPos.y+ny*20},prayCol,28,.25f);
-        SpawnParticles(g,{g.playerPos.x+nx*18,g.playerPos.y+ny*18},prayCol,10,110,true);
-        g.screenShake=std::min(g.screenShake+0.08f,0.45f);
-        break;}
-
+    switch(g.prayer){
+        case PRAYER_FIRE:
+            baseSpd   = 145.f;  // slow — threat is the burn, not the bullet
+            baseLife  = 110;
+            baseDmg   = 6;
+            baseCol   = VP_ORANGE;
+            baseGlow  = 12.f;
+            basePtype = 0;
+            break;
+        case PRAYER_ICE:
+            baseSpd   = 540.f;  // fastest — precision weapon
+            baseLife  = 55;
+            baseDmg   = 3;      // low base; shatter hit does 2x
+            baseCol   = VP_CYAN;
+            baseGlow  = 5.f;
+            basePtype = 1;
+            break;
+        case PRAYER_SPIRIT:
+        default:
+            baseSpd   = 260.f;
+            baseLife  = 85;
+            baseDmg   = 1;      // intentionally weak solo
+            baseCol   = VP_PURPLE;
+            baseGlow  = 6.f;
+            basePtype = 2;
+            baseHom   = true;
+            chainHops = 3;      // jumps to up to 3 enemies
+            break;
     }
+
+    // Ship modifiers on top of prayer
+    float spdMult  = 1.f;
+    float dmgMult  = 1.f;
+    int   extraShots = 0;
+
+    switch(g.selectedShip){
+        case 0: spdMult = 1.15f; baseCooldown=std::max(3,baseCooldown-3); break;
+        case 1: dmgMult = 1.6f;  baseCooldown=(int)(baseCooldown*1.55f);  break;
+        case 2: spdMult = 1.2f;  baseCooldown=baseCooldown+1;             break;
+        case 3: dmgMult = 1.8f;  extraShots=1; baseCooldown=(int)(baseCooldown*1.80f); break;
+    }
+
+    float finalSpd = baseSpd * spdMult;
+    int   finalDmg = std::max(1,(int)(baseDmg * dmgMult));
+
+    // Total shots: base 1, +1 if trishot, +extraShots for Titan
+    int totalShots = 1 + (tri ? 1 : 0) + extraShots;
+
+    static int iBarrel = 0;
+    for(int si=0; si<totalShots; si++){
+        float ao = 0.f;
+        if(totalShots==2) ao = (si==0 ? -0.10f : 0.10f);
+        if(totalShots==3) ao = (si==0 ? -0.14f : si==1 ? 0.14f : 0.f);
+
+        // Interceptor and Brawler alternate barrels for visual spread
+        float bSide = 0.f;
+        if(g.selectedShip==0 || g.selectedShip==1){
+            bSide = ((iBarrel+si) % 2 == 0) ? 1.f : -1.f;
+        } else if(g.selectedShip==2){
+            // Phantom fires from wing tips
+            bSide = (si % 2 == 0) ? 1.f : -1.f;
+        }
+        float barrelW = (g.selectedShip==2) ? 14.f : 6.f;
+        float ox = px2 * barrelW * bSide;
+        float oy = py2 * barrelW * bSide;
+
+        auto b = MkBullet(ox, oy, ao, finalSpd, baseLife,
+                          baseCol, baseGlow, basePtype, finalDmg, baseHom);
+        b.chainJumps   = chainHops;
+        b.chainDmgMult = 1.f;
+        BulletPoolPush(g.bullets, g.bulletRover, b);
+    }
+    iBarrel++;
+
+    // Scatter shots — inaccurate, reduced damage
+    if(sct){
+        int nSct = (g.selectedShip==3) ? 3 : 2;
+        for(int si=0; si<nSct; si++){
+            auto bs = MkBullet(px2*8.f*(si%2==0?1.f:-1.f), py2*8.f*(si%2==0?1.f:-1.f),
+                               RandF(-0.42f,0.42f), finalSpd*0.72f, baseLife-12,
+                               baseCol, baseGlow*0.6f, basePtype, 1);
+            BulletPoolPush(g.bullets, g.bulletRover, bs);
+        }
+    }
+
+    // Muzzle flash — heavier for heavier ships
+    int partCount = (g.selectedShip==3) ? 10 : (g.selectedShip==1) ? 7 : 3;
+    SpawnParticles(g, {g.playerPos.x+nx*18, g.playerPos.y+ny*18},
+                   baseCol, partCount, finalSpd*0.35f, true);
+    if(g.selectedShip==3){
+        SpawnRing(g,{g.playerPos.x+nx*20,g.playerPos.y+ny*20},baseCol,28,.25f);
+        g.screenShake=std::min(g.screenShake+0.06f,0.40f);
+    }
+    if(g.selectedShip==1)
+        g.screenShake=std::min(g.screenShake+0.03f,0.30f);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -295,12 +275,54 @@ void HitEnemy(Game& g,Enemy& e,int dmg){
     bool weak=(weakness==g.prayer);
     bool resist=(g.prayer!=weakness&&!g.tranceActive);
     int d=dmg;
-    if(resist)   d=std::max(1,(int)(dmg*.5f));
+    if(resist)    d=std::max(1,(int)(dmg*.5f));
     else if(weak) d=dmg*3;
-    if(crit)     d=(int)(d*2.5f);
-    if(g.chiGauge>=88.f&&!g.tranceActive) d=(int)(d*1.35f);
-    else if(g.chiGauge>=70.f&&!g.tranceActive) d=(int)(d*1.15f);
-    if(g.chiGauge>=70.f&&g.ucache.chiburst) d=(int)(d*1.25f);
+    if(crit)      d=(int)(d*2.5f);
+    if(g.chiGauge>=88.f&&!g.tranceActive)           d=(int)(d*1.35f);
+    else if(g.chiGauge>=70.f&&!g.tranceActive)      d=(int)(d*1.15f);
+    if(g.chiGauge>=70.f&&g.ucache.chiburst)         d=(int)(d*1.25f);
+
+    // ── PRAYER ON-HIT EFFECTS ────────────────────────────────────
+    if(g.prayer==PRAYER_FIRE){
+        // Add burn stack (max 5). Each stack = 3 dmg/sec for 2 seconds.
+        if(e.burnStacks<5) e.burnStacks++;
+        e.burnTimer=2.0f;
+        SpawnParticles(g,e.pos,VP_ORANGE,2,55.f,true);
+        if(e.burnStacks==5)
+            SpawnPopup(g,{e.pos.x,e.pos.y-28},"MAX BURN!",VP_ORANGE,11);
+    }
+    if(g.prayer==PRAYER_ICE){
+        if(e.frozenTimer>0.f && e.frozenAmp){
+            // Already frozen — SHATTER: 2x damage + ice shard spray
+            d*=2;
+            e.frozenAmp=false;
+            SpawnRing(g,e.pos,VP_CYAN,42.f,0.35f);
+            SpawnPopup(g,{e.pos.x,e.pos.y-28},"SHATTER x2!",VP_CYAN,12);
+            for(int i=0;i<5;i++){
+                float a2=RandF(0.f,2.f*PI);
+                Bullet shard{};
+                shard.pos={e.pos.x,e.pos.y};
+                shard.vel={cosf(a2)*180.f,sinf(a2)*180.f};
+                shard.life=28; shard.active=true;
+                shard.col=VP_CYAN; shard.glowR=3.f;
+                shard.prayerType=1; shard.damage=1;
+                shard.shipType=g.selectedShip;
+                BulletPoolPush(g.bullets,g.bulletRover,shard);
+            }
+        } else {
+            // First hit: freeze
+            e.frozenTimer=1.4f;
+            e.frozenMult=0.35f;
+            e.frozenAmp=true;
+            SpawnParticles(g,e.pos,VP_CYAN,4,45.f,false);
+            SpawnPopup(g,{e.pos.x,e.pos.y-24},"FROZEN",VP_CYAN,10);
+        }
+    }
+    if(g.prayer==PRAYER_SPIRIT){
+        g.tranceGauge=std::min(100.f,g.tranceGauge+8.f);
+    }
+
+    // ── STANDARD HIT PROCESSING ──────────────────────────────────
     e.hp-=d; e.flashTimer=10;
     if(resist&&!crit){SpawnPopup(g,{e.pos.x,e.pos.y-24},"RESIST",VP_GRAY,11);SpawnParticles(g,e.pos,VP_DARKGRAY,3,35);}
     else if(weak){
@@ -318,6 +340,50 @@ void HitEnemy(Game& g,Enemy& e,int dmg){
 }
 void KillEnemy(Game& g,Enemy& e){
     e.active=false;
+
+    // ── PRAYER ON-KILL EFFECTS ───────────────────────────────────
+    // FIRE: burning kill ignites nearby enemies
+    if(g.prayer==PRAYER_FIRE && e.burnStacks>0){
+        for(auto& en:g.enemies){
+            if(!en.active||&en==&e) continue;
+            float dx=en.pos.x-e.pos.x, dy=en.pos.y-e.pos.y;
+            if(dx*dx+dy*dy<130.f*130.f){
+                en.burnStacks=std::min(5,en.burnStacks+2);
+                en.burnTimer=2.0f;
+                SpawnParticles(g,en.pos,VP_ORANGE,3,50.f,true);
+            }
+        }
+        SpawnRing(g,e.pos,VP_ORANGE,80.f,0.4f);
+    }
+    // ICE: frozen kill shatters — 6 ice shards spray outward
+    if(g.prayer==PRAYER_ICE && e.frozenTimer>0.f){
+        for(int i=0;i<6;i++){
+            float a2=(float)i/6.f*2.f*PI;
+            Bullet shard{};
+            shard.pos={e.pos.x,e.pos.y};
+            shard.vel={cosf(a2)*160.f,sinf(a2)*160.f};
+            shard.life=35; shard.active=true;
+            shard.col=VP_CYAN; shard.glowR=3.5f;
+            shard.prayerType=1; shard.damage=2;
+            shard.shipType=g.selectedShip;
+            BulletPoolPush(g.bullets,g.bulletRover,shard);
+        }
+        SpawnRing(g,e.pos,VP_CYAN,65.f,0.4f);
+        SpawnPopup(g,{e.pos.x,e.pos.y-28},"ICE SHATTER!",VP_CYAN,11);
+    }
+    // SPIRIT: chain kill counter — 8 chain kills summons ghost orb
+    if(g.prayer==PRAYER_SPIRIT){
+        g.spiritChainKills++;
+        g.tranceGauge=std::min(100.f,g.tranceGauge+4.f);
+        if(g.spiritChainKills>=8 && !g.ghostOrbActive){
+            g.ghostOrbActive=true;
+            g.ghostOrbTimer=0.9f;
+            g.spiritChainKills=0;
+            SpawnPopup(g,{g.playerPos.x,g.playerPos.y-70},"GHOST ORB SUMMONED",VP_PURPLE,14);
+            SpawnRing(g,g.playerPos,VP_PURPLE,60.f,0.5f);
+        }
+    }
+
     PushKillFeed(gUI,std::string(ENEMY_DEFS[e.type].sym)+" destroyed",e.col);
     g.waveKills++; g.totalKills++; g.killCount++;
     g.combo=std::min(20,g.combo+1); g.comboTimer=g.comboMax;
@@ -329,10 +395,10 @@ void KillEnemy(Game& g,Enemy& e){
     SpawnPickup(g,e.pos,std::max(0,e.scoreVal));
     g.tranceGauge=std::min(100.f,g.tranceGauge+2.f);
     float heatRelease=3.5f+g.wave*0.15f;
-    if(e.type==E_TANK||e.type==E_BOMB)   heatRelease*=2.2f;
-    if(e.type==E_GOLDEN||e.type==E_CRYSTAL) heatRelease*=2.8f;
-    if(e.type==E_VOID)                   heatRelease*=4.0f;
-    if(g.ucache.overclock)        heatRelease*=(1.f+g.ucache.overclockLv*0.35f);
+    if(e.type==E_TANK||e.type==E_BOMB)        heatRelease*=2.2f;
+    if(e.type==E_GOLDEN||e.type==E_CRYSTAL)   heatRelease*=2.8f;
+    if(e.type==E_VOID)                        heatRelease*=4.0f;
+    if(g.ucache.overclock) heatRelease*=(1.f+g.ucache.overclockLv*0.35f);
     g.chiGauge=std::max(0.f,g.chiGauge-heatRelease);
     if(g.heatVentTimer>0&&g.chiGauge<50.f){g.heatVentTimer=0;g.chiRingTimer=0;}
     if(g.waveKills>=g.waveTarget&&!g.bossPhase){SpawnPopup(g,{g.playerPos.x,g.playerPos.y-90},"WAVE CLEAR!",VP_MINT,18);SpawnRing(g,g.playerPos,VP_MINT,180,.7f);SpawnRing(g,g.playerPos,VP_CYAN,120,.5f);SpawnParticles(g,g.playerPos,VP_MINT,12,120,true);}
@@ -2559,6 +2625,7 @@ int main(){
             g.progressJuice=std::max(0.f,g.progressJuice-dt*8.f);
             g.lastKillFlash=std::max(0.f,g.lastKillFlash-dt*12.f);
             UpdateHyper(t,dt,g); UpdateDust(dt,g); UpdateLightning(dt); UpdateSectorRings(dt);
+            UpdatePrayerEffects(g,dt);
             for(auto& h:g.hazards)h.angle+=h.spinSpeed;
             UpdateShootingStars(g,dt);
 
@@ -2659,7 +2726,39 @@ int main(){
                             if(g.boss.active){float bx2=g.boss.pos.x-b.pos.x,by2=g.boss.pos.y-b.pos.y;if(bx2*bx2+by2*by2<8100.f)HitBoss(g,2);}
                             b.active=false; b.burstTimer=0.f; hit=true;
                         } else {
-                            HitEnemy(g,e,b.damage);
+                            int hitDmg=(int)(b.damage*b.chainDmgMult);
+                            HitEnemy(g,e,hitDmg);
+
+                            // ── SPIRIT CHAIN JUMP ────────────────────────
+                            if(b.prayerType==2 && b.chainJumps>0 && e.active==false){
+                                // Find nearest OTHER active enemy within 220px
+                                Enemy* target=nullptr;
+                                float  bestD=1e9f;
+                                for(auto& en2:g.enemies){
+                                    if(!en2.active||&en2==&e) continue;
+                                    float dx2=en2.pos.x-e.pos.x,dy2=en2.pos.y-e.pos.y;
+                                    float d2=dx2*dx2+dy2*dy2;
+                                    if(d2<bestD && d2<220.f*220.f){bestD=d2;target=&en2;}
+                                }
+                                if(target){
+                                    float cdx=target->pos.x-e.pos.x;
+                                    float cdy=target->pos.y-e.pos.y;
+                                    float cd=sqrtf(cdx*cdx+cdy*cdy);
+                                    Bullet chain{};
+                                    chain.pos={e.pos.x,e.pos.y};
+                                    chain.vel={(cdx/cd)*300.f,(cdy/cd)*300.f};
+                                    chain.life=60; chain.active=true;
+                                    chain.col=VP_LAVENDER; chain.glowR=8.f;
+                                    chain.prayerType=2; chain.damage=b.damage;
+                                    chain.chainJumps=b.chainJumps-1;
+                                    chain.chainDmgMult=b.chainDmgMult*1.5f;
+                                    chain.shipType=g.selectedShip;
+                                    chain.homing=true; chain.homingStr=3.5f;
+                                    BulletPoolPush(g.bullets,g.bulletRover,chain);
+                                    SpawnRing(g,e.pos,VP_PURPLE,28.f,0.25f);
+                                }
+                                b.active=false; hit=true;
+                            }
                         }
                         if(!isPiercing && !isSolarFlare){b.active=false;hit=true;}
                         SpawnParticles(g,b.pos,VP_YELLOW,3,60,true);
@@ -3060,6 +3159,7 @@ int main(){
                 }
             }
             DrawPlayer(g,sc,t);
+            DrawGhostOrb(g,t);
             DrawSectorRings(g);
             // Crosshair (pink/cyan)
             Color xhc=g.tranceActive?VP_PINK:PrayerColor(g.prayer);
